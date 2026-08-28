@@ -1,0 +1,7 @@
+{
+  "name": "HouseLan",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}
