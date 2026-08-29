@@ -1,3 +1,4 @@
+import { db } from '@/services/database.service';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
 
@@ -34,32 +35,35 @@ const router = createRouter({
   routes
 })
 
-// const requiresAuthMiddleware = async() => {
-//   try {
-//     const db = await dbService.getDb()
-    
-//     const result = await db.query('SELECT * FROM users WHERE isLoggedIn = 1 LIMIT 1')
-    
-//     if(result.values && result.values.length > 0) {
-//       return true
-//     }
-    
-//     return false
-    
-//   } catch(err) {
-//     console.error(err)
-//     return false
-//   }
-// }
+const checkAuth = async() => {
+  try {
+   
+    const result = await db.users.toCollection().first()
 
-router.beforeEach((to, from) => {
+    console.log('user result', result)
+
+    if(result?.isLoggedIn) {
+      return true
+    }
+    
+    return false
+    
+  } catch(err) {
+    console.error(err)
+    return false
+  }
+}
+
+router.beforeEach(async (to) => {
   if(to.meta.requiresAuth) {
-    const isAuthenticated = true
+    const isAuthenticated = await checkAuth()
     
     if(isAuthenticated) {
+      console.log('User logged in')
       return true
     }
 
+    console.log('User not logged in')
     return {name: 'Home'}
   }
 

@@ -2,8 +2,12 @@
 import { db } from '@/services/database.service';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonInput, IonModal, IonPage, IonTitle, IonToolbar, toastController } from '@ionic/vue';
 import { eyeOffOutline, eyeOutline, lockClosedOutline, logInOutline } from 'ionicons/icons';
-import { reactive, ref } from 'vue';
+import { inject, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+
+
+const appConfig = inject('config') as any
+const logoUrl = ref(appConfig.appLogo);
 
 const forgotPasswordModal = ref()
 
@@ -16,6 +20,7 @@ const form = reactive({
   showPassword: false,
   password: '',
 });
+
 
 const registerUser = async () => {
   try {
@@ -32,11 +37,16 @@ const registerUser = async () => {
 
 const authenticate  = async () => {
   try {
-    const getUser = await db.users.filter(user => user.password === form.password).first()
+    const getUser = await db.users.toCollection().first()
+
 
     if(!getUser) {
       return
     }
+    
+   await db.users.update(getUser.id, {
+    isLoggedIn: true
+   })
     
     await router.replace({name: 'dashboard.index'})
 
@@ -67,7 +77,9 @@ const login = async () => {
       return
     }
   
-    await registerUser()
+    if(hasUser == 0) {
+      await registerUser()
+    }
     await authenticate()
 
     
@@ -121,7 +133,7 @@ const recoverPasswordSubmit = async() => {
       <div class="login-wrapper">
         <section class="login-card" aria-labelledby="login-title">
           <div class="brand-logo" aria-hidden="true">
-            <img src="/logo.png" alt="Logo" width="70" />
+            <img :src="logoUrl" alt="Logo" width="70" />
           </div>
           <h1 id="login-title" class="sr-only">Entrar</h1>
           <form @submit.prevent="login">

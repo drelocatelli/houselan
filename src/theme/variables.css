@@ -7,7 +7,10 @@ http://ionicframework.com/docs/theming/ */
   --ion-color-primary-contrast: #ffffff;
   --ion-background-color: #000;
   --ion-text-color: #fff;
-  --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #8e3cf1;
-  --ion-color-primary-tint: #a350ff;
+  
+}
+
+
+ion-button {
+  --background-hover: #fff;
 }
