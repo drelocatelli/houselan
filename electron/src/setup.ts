@@ -5,7 +5,8 @@ import type { MenuItemConstructorOptions } from 'electron';
 import { app, BrowserWindow, ipcMain, Menu, MenuItem, nativeImage, session, shell, Tray } from 'electron';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
-import { join } from 'path';
+import fs from 'fs';
+import path, { join } from 'path';
 
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
 const reloadWatcher = {
@@ -316,8 +317,83 @@ export function setupContentSecurityPolicy(customScheme: string): void {
   });
 }
 
+function parseProperties(rawText: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  
+  if (!rawText) return result;
+
+  rawText.split(/\r?\n/).forEach((line) => {
+    const trimmed = line.trim();
+    // Ignora linhas vazias e comentários (# ou !)
+    if (trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('!')) {
+      const [key, ...valueParts] = trimmed.split('=');
+      if (key) {
+        result[key.trim().toLocaleLowerCase()] = valueParts.join('=').trim();
+      }
+    }
+  });
+
+  return result;
+}
+
 ipcMain.on('open-external', (_event, url: string) => {
   if (url.startsWith('https://') || url.startsWith('http://')) {
     void shell.openExternal(url);
   }
+});
+
+function getPropertiesPath() {
+  const propertiesPath = path.join(__dirname, 'assets', 'app.properties');
+
+  if(fs.existsSync(propertiesPath)) {
+    return propertiesPath;
+  }
+
+  return path.join(app.getPath("userData"), "app.properties");
+}
+
+function ensurePropertiesFile() {
+  const userPropertiesPath = getPropertiesPath();
+
+  if (!fs.existsSync(userPropertiesPath)) {
+    const defaultPropertiesPath = getPropertiesPath()
+
+    fs.copyFileSync(defaultPropertiesPath, userPropertiesPath);
+  }
+
+  return userPropertiesPath;
+}
+
+ipcMain.handle("read-properties", () => {
+  const filePath = ensurePropertiesFile();
+  const rawContent = fs.readFileSync(filePath, { encoding: "utf-8" });
+
+  // Retorna o objeto em vez da string pura
+  return parseProperties(rawContent);
+});
+
+ipcMain.handle("set-properties", (_event, key: string, value: string) => {
+  const filePath = ensurePropertiesFile();
+  const data = fs.readFileSync(filePath, { encoding: "utf-8" });
+
+  const lines = data.split(/\r?\n/);
+  let found = false;
+
+  const newLines = lines.map((line) => {
+    const trimmedLine = line.trim();
+    if (trimmedLine.startsWith(`${key}=`) || trimmedLine.startsWith(`${key} =`)) {
+      found = true;
+      return `${key}=${value}`;
+    }
+    return line;
+  });
+
+  if (!found) {
+    newLines.push(`${key}=${value}`);
+  }
+
+  fs.writeFileSync(filePath, newLines.join("\n"), { encoding: "utf-8" });
+  
+  // Opcional: Retorna o objeto atualizado
+  return parseProperties(newLines.join("\n"));
 });

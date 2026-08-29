@@ -9,3 +9,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.send('open-external', url);
   }
 });
+
+contextBridge.exposeInMainWorld('config', {
+  read: () => ipcRenderer.invoke('read-properties'),
+  set: (key: string, value: string) => ipcRenderer.invoke('set-properties', key, value),
+})

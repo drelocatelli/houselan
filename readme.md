@@ -1,0 +1,1 @@
+Edite o arquivo app.properties

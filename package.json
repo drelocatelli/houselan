@@ -6,12 +6,17 @@
   "scripts": {
     "dev": "vite",
     "dev:desktop": "concurrently -k \"npm run dev\" \"wait-on http://localhost:5173 && npm run electron\"",
-    "electron": "npx tsc -p electron && NODE_ENV=development npx electron electron",
-    "build": "ionic build && npx cap copy electron",
-    "build:desktop": "npm run build && electron-builder"
+    "dev:android": "ionic capacitor run android -l --external --device --consolelogs --serverlogs --mode dev",
+    "electron": "npx tsc -p electron && npm run copy-properties && NODE_ENV=development npx electron electron",
+    "build": "npm run build:front && npm run build:desktop",
+    "build:front": "rm -rf dist && rm -rf electron/dist && npx ionic build && npx cap copy electron",
+    "build:electron": "npx tsc -p electron",
+    "copy-properties": "mkdir -p electron/build/src/assets && copyfiles -f app.properties electron/build/src/assets",
+    "build:desktop": "npm run build:electron && npm run copy-properties && cd electron && npm run electron:make -- --publish never"
   },
   "dependencies": {
     "@capacitor-community/electron": "^5.0.1",
+    "@capacitor/android": "^8.5.0",
     "@capacitor/app": "8.1.1",
     "@capacitor/core": "8.5.0",
     "@capacitor/haptics": "8.0.2",
@@ -25,12 +30,14 @@
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.0",
+    "@ionic/cli": "^7.2.1",
     "@types/minimatch": "^5.1.2",
     "@vitejs/plugin-legacy": "^8.0.0",
     "@vitejs/plugin-vue": "^6.0.0",
     "@vue/eslint-config-typescript": "^12.0.0",
     "@vue/test-utils": "^2.3.0",
     "concurrently": "^10.0.5",
+    "copyfiles": "^2.4.1",
     "cypress": "^13.5.0",
     "electron": "^44.0.0",
     "electron-builder": "^26.15.3",

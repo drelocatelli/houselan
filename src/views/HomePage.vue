@@ -1,3 +1,44 @@
+<script setup lang="ts">
+import config from '@/utis/config';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonInput, IonModal, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
+import { eyeOffOutline, eyeOutline, lockClosedOutline, logInOutline } from 'ionicons/icons';
+import { onBeforeMount, reactive, ref } from 'vue';
+
+const forgotPasswordModal = ref()
+
+const form = reactive({
+  showPassword: false,
+  password: '',
+});
+const passwordStored = ref<string>('');
+
+onBeforeMount(async () => {
+  passwordStored.value = (await config.read()).password;
+});
+
+
+const login = () => {
+  console.log('Entrar');
+}
+
+const recoverPassword = () => {
+  const modalEl = forgotPasswordModal?.value?.$el
+  if(modalEl)
+    modalEl.present();
+}
+
+const closeForgotPasswordModal = () => {
+  const modalEl = forgotPasswordModal?.value?.$el
+  if(modalEl)
+    modalEl.dismiss();
+}
+
+const onWillDimiss = (e: any) => {
+  console.log(e)
+}
+
+</script>
+
 <template>
   <ion-page>
     <ion-content :fullscreen="true" class="login-content">
@@ -7,18 +48,14 @@
             <img src="/logo.png" alt="Logo" width="70" />
           </div>
           <h1 id="login-title" class="sr-only">Entrar</h1>
-          <form @submit.prevent="entrar">
-
+          <form @submit.prevent="login">
             <div class="input-wrapper">
-              <ion-icon
-                :icon="lockClosedOutline"
-                class="input-icon"
-              />
+              <ion-icon :icon="lockClosedOutline" class="input-icon" />
 
               <ion-input
-                v-model="senha"
-                name="senha"
-                :type="mostrarSenha ? 'text' : 'password'"
+                v-model="form.password"
+                name="password"
+                :type="form.showPassword ? 'text' : 'password'"
                 label="Senha"
                 label-placement="floating"
                 autocomplete="current-password"
@@ -28,84 +65,68 @@
               <button
                 type="button"
                 class="show-password"
-                :aria-label="
-                  mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'
-                "
-                @click="mostrarSenha = !mostrarSenha"
+                :aria-label="form.showPassword ? 'Ocultar senha' : 'Mostrar senha'"
+                @click="form.showPassword = !form.showPassword"
               >
-                <ion-icon
-                  :icon="mostrarSenha ? eyeOffOutline : eyeOutline"
-                />
+                <ion-icon :icon="form.showPassword ? eyeOffOutline : eyeOutline" />
               </button>
             </div>
 
             <div class="forgot-password">
-              <a href="#" @click.prevent="recuperarSenha">
-                Esqueci minha senha
-              </a>
+              <a href="#" @click.prevent="recoverPassword"> Esqueci minha senha </a>
             </div>
 
-            <ion-button
-              type="submit"
-              expand="block"
-              class="login-button"
-              :disabled="!email || !senha"
-            >
+            <ion-button type="submit" expand="block" class="login-button" :disabled="!form.password">
               Entrar
               <ion-icon slot="end" :icon="logInOutline" />
             </ion-button>
           </form>
 
-          <footer class="login-footer"> 
-            <a href="https://github.com/drelocatelli" style="text-decoration: none;" target="_blank">RaccoonTech</a>
+          <footer class="login-footer">
+            <a href="https://github.com/drelocatelli" style="text-decoration: none" target="_blank">RaccoonTech</a>
           </footer>
         </section>
       </div>
+
+      <ion-modal ref="forgotPasswordModal" class="forgotPasswordModal" @onWillDimiss="onWillDimiss">
+        <ion-header>
+          <ion-toolbar>
+            <IonTitle>Recuperar Senha</IonTitle>
+            <IonButtons slot="end">
+              <IonButton @click="closeForgotPasswordModal">Cancelar</IonButton>
+            </IonButtons>
+          </ion-toolbar>
+        </ion-header>
+
+        <IonContent class="ion-padding forget_password_content">
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              height: 100%;
+              text-align: center;
+              box-sizing: border-box;
+            "
+          >
+            Para recuperar a senha, digite uma nova no formulário abaixo.
+          </div>
+        </IonContent>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
 
-<script setup lang="ts">
-import {
-  IonButton,
-  IonContent,
-  IonIcon,
-  IonInput,
-  IonPage
-} from '@ionic/vue'
-import {
-  eyeOffOutline,
-  eyeOutline,
-  lockClosedOutline,
-  logInOutline
-} from 'ionicons/icons'
-import { ref } from 'vue'
-
-const email = ref('')
-const senha = ref('')
-const mostrarSenha = ref(false)
-
-function entrar() {
-  console.log({
-    email: email.value,
-    senha: senha.value
-  })
-}
-
-function recuperarSenha() {
-  console.log('Abrir recuperação de senha')
-}
-</script>
-
 <style scoped>
-:host {
-  --login-background: #101010;
-  --login-card-background: #222222;
-  --login-input-background: #111111;
-  --login-text: #f5f5f5;
-  --login-muted: #777777;
-  --login-link: #91a4ff;
-  --login-icon: #8da1ff;
+section.login-card {
+  background-color: #222;
+}
+
+.forgotPasswordModal {
+  --width: 100%;
+  --height: 100%;
+  box-sizing: border-box;
 }
 
 .login-content {
@@ -192,8 +213,7 @@ function recuperarSenha() {
 
 .input-wrapper:focus-within {
   border-color: var(--ion-color-primary);
-  box-shadow: 0 0 0 3px
-    color-mix(in srgb, var(--ion-color-primary) 22%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ion-color-primary) 22%, transparent);
 }
 
 .input-icon {
