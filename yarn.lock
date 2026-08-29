@@ -811,7 +811,7 @@
 
 "@capacitor/android@^8.5.0":
   version "8.5.0"
-  resolved "https://registry.yarnpkg.com/@capacitor/android/-/android-8.5.0.tgz#1fa7c7eb00b6600df1f346b6548869670e6cd0d3"
+  resolved "https://registry.npmjs.org/@capacitor/android/-/android-8.5.0.tgz"
   integrity sha512-Rb3prJeQiTp0pQhSSOReJuG9VgibOGMG4ECs+UhMwr6TCCHZ3NCZO811bDA0HxD0xrT/gCrJAsY5yfEATu84JQ==
 
 "@capacitor/app@8.1.1":
@@ -3081,6 +3081,11 @@ detect-node@^2.0.4:
   version "2.1.0"
   resolved "https://registry.npmjs.org/detect-node/-/detect-node-2.1.0.tgz"
   integrity sha512-T0NIuQpnTvFDATNuHN5roPwSBG83rFsuO+MXXH9/3N1eFbn4wcPjttvjMLEPWJ0RGUYgQE7cGgS3tNxbqCGM7g==
+
+dexie@^4.4.5:
+  version "4.4.5"
+  resolved "https://registry.yarnpkg.com/dexie/-/dexie-4.4.5.tgz#0af5132d36ee4212d099dad0c1fa327fbadb1685"
+  integrity sha512-wWCHdihT3dmlUSuNhn5mMZDWSpG0suxjAni7YjjiZdzabZcKmy3uNZGZ7AeYYXBoLbpSXX35fikPLkPC44Osiw==
 
 dezalgo@^1.0.4:
   version "1.0.4"

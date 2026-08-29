@@ -1,24 +1,82 @@
 <script setup lang="ts">
-import config from '@/utis/config';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonInput, IonModal, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
+import { db } from '@/services/database.service';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonInput, IonModal, IonPage, IonTitle, IonToolbar, toastController } from '@ionic/vue';
 import { eyeOffOutline, eyeOutline, lockClosedOutline, logInOutline } from 'ionicons/icons';
-import { onBeforeMount, reactive, ref } from 'vue';
+import { reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 const forgotPasswordModal = ref()
+
+const router = useRouter()
+
+const isLogging = ref(false)
+const isFirstLogin = ref(false)
 
 const form = reactive({
   showPassword: false,
   password: '',
 });
-const passwordStored = ref<string>('');
 
-onBeforeMount(async () => {
-  passwordStored.value = (await config.read()).password;
-});
+const registerUser = async () => {
+  try {
+    await db.users.add({
+      password: form.password,
+      isLoggedIn: true
+    })
 
+    isFirstLogin.value = false
+  } catch(err) {
+    console.error(err)
+  }
+}
 
-const login = () => {
-  console.log('Entrar');
+const authenticate  = async () => {
+  try {
+    const getUser = await db.users.filter(user => user.password === form.password).first()
+
+    if(!getUser) {
+      return
+    }
+    
+    await router.replace({name: 'dashboard.index'})
+
+  } catch(err) {
+    console.error(err)
+  }
+}
+
+const login = async () => {
+  try {
+    isLogging.value = true
+
+    const hasUser = await db.users.count()
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    if(hasUser === 0 && !isFirstLogin.value) {
+      await toastController.create({
+        header: 'É seu primeiro acesso, digite uma senha para gravar no banco de dados',
+        color: 'success',
+        duration: 5000,
+        position: 'top',
+        
+      }).then(el => el.present())
+
+      isFirstLogin.value = true
+      form.password = ''
+      
+      return
+    }
+  
+    await registerUser()
+    await authenticate()
+
+    
+  } catch(err) {
+    console.error(err)
+  } finally {
+    isLogging.value = false
+  }
+
 }
 
 const recoverPassword = () => {
@@ -77,13 +135,13 @@ const onWillDimiss = (e: any) => {
             </div>
 
             <ion-button type="submit" expand="block" class="login-button" :disabled="!form.password">
-              Entrar
+              {{ isFirstLogin ? 'Criar conta' : isLogging ? 'Autenticando...' : 'Entrar' }}
               <ion-icon slot="end" :icon="logInOutline" />
             </ion-button>
           </form>
 
           <footer class="login-footer">
-            <a href="https://github.com/drelocatelli" style="text-decoration: none" target="_blank">RaccoonTech</a>
+            <a href="https://github.com/drelocatelli" style="text-decoration: none; color: var(--ion-color-primary)" target="_blank">RaccoonTech</a>
           </footer>
         </section>
       </div>
@@ -205,7 +263,7 @@ section.login-card {
   padding-left: 46px;
   border: 1px solid rgb(255 255 255 / 4%);
   border-radius: 11px;
-  background: var(--login-input-background);
+  background: #000;
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease;
@@ -213,7 +271,7 @@ section.login-card {
 
 .input-wrapper:focus-within {
   border-color: var(--ion-color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ion-color-primary) 22%, transparent);
+  box-shadow: 0 0 0 3p color-mix(in srgb, var(--ion-color-primary) 22%, transparent);
 }
 
 .input-icon {

@@ -7,12 +7,11 @@
     "dev": "vite",
     "dev:desktop": "concurrently -k \"npm run dev\" \"wait-on http://localhost:5173 && npm run electron\"",
     "dev:android": "ionic capacitor run android -l --external --device --consolelogs --serverlogs --mode dev",
-    "electron": "npx tsc -p electron && npm run copy-properties && NODE_ENV=development npx electron electron",
+    "electron": "npx tsc -p electron && NODE_ENV=development npx electron electron",
     "build": "npm run build:front && npm run build:desktop",
     "build:front": "rm -rf dist && rm -rf electron/dist && npx ionic build && npx cap copy electron",
     "build:electron": "npx tsc -p electron",
-    "copy-properties": "mkdir -p electron/build/src/assets && copyfiles -f app.properties electron/build/src/assets",
-    "build:desktop": "npm run build:electron && npm run copy-properties && cd electron && npm run electron:make -- --publish never"
+    "build:desktop": "npm run build:electron && cd electron && npm run electron:make -- --publish never"
   },
   "dependencies": {
     "@capacitor-community/electron": "^5.0.1",
@@ -24,6 +23,7 @@
     "@capacitor/status-bar": "8.0.3",
     "@ionic/vue": "^9.0.0",
     "@ionic/vue-router": "^9.0.0",
+    "dexie": "^4.4.5",
     "ionicons": "^8.1.0",
     "vue": "^3.5.0",
     "vue-router": "^5.0.0"

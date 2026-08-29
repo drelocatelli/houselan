@@ -40,6 +40,7 @@ if (electronIsDev) {
 app.disableHardwareAcceleration();
 
 app.whenReady().then(async () => {
+  console.log('app ready')
   setupContentSecurityPolicy(
     myCapacitorApp.getCustomURLScheme()
   );
@@ -65,4 +66,3 @@ app.on('activate', async function () {
   }
 });
 
-// Place all ipc or other electron api calls and custom functionality under this line

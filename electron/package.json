@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "@types/minimatch": "^5.1.2",
+    "cross-env": "^10.1.0",
     "electron": "^26.2.2",
     "electron-builder": "~23.6.0",
     "electron-rebuild": "^3.2.9",

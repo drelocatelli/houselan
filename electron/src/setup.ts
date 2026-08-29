@@ -3,12 +3,15 @@ import { CapacitorSplashScreen, CapElectronEventEmitter, setupCapacitorElectronP
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
 import { app, BrowserWindow, ipcMain, Menu, MenuItem, nativeImage, session, shell, Tray } from 'electron';
+import electronIsDev from 'electron-is-dev';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
 import fs from 'fs';
 import path, { join } from 'path';
 
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
+console.log('Electron loaded')
+
 const reloadWatcher = {
   debouncer: null,
   ready: false,
@@ -22,6 +25,7 @@ export function setupReloadWatcher(electronCapacitorApp: ElectronCapacitorApp): 
     })
     .on('ready', () => {
       reloadWatcher.ready = true;
+      console.log()
     })
     .on('all', (_event, _path) => {
       if (reloadWatcher.ready) {
@@ -39,6 +43,7 @@ export function setupReloadWatcher(electronCapacitorApp: ElectronCapacitorApp): 
 }
 
 // Define our class to manage our app.
+process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 export class ElectronCapacitorApp {
   private MainWindow: BrowserWindow | null = null;
   private SplashScreen: CapacitorSplashScreen | null = null;
@@ -74,6 +79,7 @@ export class ElectronCapacitorApp {
       },
     },
   ];
+
   private mainWindowState;
   private loadWebApp;
   private customScheme: string;
@@ -124,6 +130,7 @@ export class ElectronCapacitorApp {
   }
 
   async init(): Promise<void> {
+    console.log('[SETUP] init executado:', __filename);
     const icon = nativeImage.createFromPath(join(app.getAppPath(), 'assets', process.platform === 'win32' ? 'appIcon.ico' : 'appIcon.png'));
     this.mainWindowState = windowStateKeeper({
       defaultWidth: 1000,
@@ -229,6 +236,7 @@ export class ElectronCapacitorApp {
     this.MainWindow.setAutoHideMenuBar(true);
     this.MainWindow.setMenuBarVisibility(false);
 
+
     this.MainWindow.webContents.on('before-input-event', (event, input) => {
       // RELOAD ON F5
       if (input.key === 'F5') {
@@ -244,6 +252,7 @@ export class ElectronCapacitorApp {
         this.MainWindow.setMenuBarVisibility(!menuVisivel);
       }
     });
+
 
     // If the splashscreen is enabled, show it first while the main window loads then switch it out for the main window, or just load the main window from the start.
     if (this.CapacitorFileConfig.electron?.splashScreenEnabled) {
@@ -290,32 +299,44 @@ export class ElectronCapacitorApp {
 }
 
 // Set a CSP up for our application based on the custom scheme
+// Place all ipc or other electron api calls and custom functionality under this line
 export function setupContentSecurityPolicy(customScheme: string): void {
-  const isLinux = process.platform === 'linux';
+  const isDev = electronIsDev;
 
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    const csp = isLinux
-      ? [
-          `default-src * data: blob: 'unsafe-inline' 'unsafe-eval'`,
-          `script-src * data: blob: 'unsafe-inline' 'unsafe-eval'`,
-          `script-src-elem * data: blob: 'unsafe-inline' 'unsafe-eval'`,
-          `style-src * data: blob: 'unsafe-inline'`,
-          `img-src * data: blob:`,
-          `font-src * data: blob:`,
-          `connect-src * ws: wss: data: blob:`,
-          `worker-src * data: blob:`,
-          `frame-src * data: blob:`,
-        ].join('; ')
-      : [].join('; ');
+  const csp = [
+    `default-src 'self' ${customScheme}: data: blob:`,
+    `script-src 'self' ${customScheme}: ${
+      isDev ? "'unsafe-eval' 'unsafe-inline'" : ''
+    }`,
+    `style-src 'self' ${customScheme}: 'unsafe-inline'`,
+    `img-src 'self' ${customScheme}: data: blob:`,
+    `font-src 'self' ${customScheme}: data: blob:`,
+    `connect-src 'self' ${customScheme}: ${
+      isDev ? 'http://localhost:5173 ws://localhost:5173' : ''
+    }`,
+    `worker-src 'self' ${customScheme}: blob:`,
+    `frame-src 'self' ${customScheme}:`,
+  ].join('; ');
 
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': [csp],
-      },
-    });
-  });
+  session.defaultSession.webRequest.onHeadersReceived(
+    (details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Security-Policy': [csp],
+        },
+      });
+    }
+  );
 }
+
+
+ipcMain.on('open-external', (_event, url: string) => {
+  if (url.startsWith('https://') || url.startsWith('http://')) {
+    void shell.openExternal(url);
+  }
+});
+
 
 function parseProperties(rawText: string): Record<string, string> {
   const result: Record<string, string> = {};
