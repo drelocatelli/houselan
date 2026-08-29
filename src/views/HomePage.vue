@@ -95,6 +95,24 @@ const onWillDimiss = (e: any) => {
   console.log(e)
 }
 
+                  
+const recoverPasswordSubmit = async() => {
+  try {
+    const user = await db.users.toCollection().first()
+    await db.users.update(user.id, {
+      password: form.password,
+      isLoggedIn: true
+    })
+
+    await router.replace({name: 'dashboard.index'})
+
+    closeForgotPasswordModal()
+
+  } catch(err) {
+    console.error(err)
+  }
+}
+
 </script>
 
 <template>
@@ -169,7 +187,34 @@ const onWillDimiss = (e: any) => {
             "
           >
             Para recuperar a senha, digite uma nova no formulário abaixo.
-          </div>
+              <form @submit.prevent="recoverPasswordSubmit" style="margin-top: 1rem; display: flex; flex-direction: row; justify-content: center; gap: 5px;">
+                <div class="input-wrapper">
+                  <ion-icon :icon="lockClosedOutline" class="input-icon" />
+  
+                  <ion-input
+                    v-model="form.password"
+                    name="password"
+                    :type="form.showPassword ? 'text' : 'password'"
+                    label="Nova Senha"
+                    label-placement="floating"
+                    autocomplete="new-password"
+                    required
+                  />
+                  
+                  <button
+                  type="button"
+                  class="show-password"
+                  :aria-label="form.showPassword ? 'Ocultar senha' : 'Mostrar senha'"
+                  @click="form.showPassword = !form.showPassword"
+                  >
+                  <ion-icon :icon="form.showPassword ? eyeOffOutline : eyeOutline" />
+                </button>
+              </div>
+              <IonButton type="submit" expand="block" class="login-button" :disabled="!form.password">
+                Salvar
+              </IonButton>
+              </form>
+            </div>
         </IonContent>
       </ion-modal>
     </ion-content>

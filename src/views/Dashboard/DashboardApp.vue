@@ -5,6 +5,6 @@ import { IonPage, IonRouterOutlet } from '@ionic/vue';
 
 <template>
     <IonPage>
-        <IonRouterOutlet></IonRouterOutlet>
+        <IonRouterOutlet id="dashboard-outlet"></IonRouterOutlet>
     </IonPage>
 </template>
