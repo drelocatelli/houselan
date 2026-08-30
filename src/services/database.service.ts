@@ -16,10 +16,16 @@ export interface Config {
   key: any;
 }
 
+export interface Theme {
+  id?: number
+  background?: Blob
+}
+
 export class AppDatabase extends Dexie {
   users!: Table<User>;
   config!: Table<Config>;
   logo!: Table<Logo>;
+  theme!: Table<Theme>;
 
   constructor() {
     super('AppDatabase');
@@ -27,6 +33,8 @@ export class AppDatabase extends Dexie {
     this.version(1).stores({
       users: '++id, isLoggedIn',
       config: '++key, appName',
+      logo: '++id, file',
+      theme: '++id, background'
     });
 
     this.version(1).stores({
@@ -35,6 +43,7 @@ export class AppDatabase extends Dexie {
 
     this.getAppName();
     this.getAppLogo();
+    this.getTheme()
   }
 
   async getAppName() {
@@ -69,6 +78,26 @@ export class AppDatabase extends Dexie {
     }
 
     return URL.createObjectURL(blob);
+  }
+
+  async getTheme(): Promise<string> {
+    const theme = await this.theme.toCollection().first()
+
+    if(theme?.background) {
+      return URL.createObjectURL(theme.background)
+    } 
+
+    const response = await fetch('/bg.png')
+    const blob = await response.blob()
+    
+    if(theme) {
+      theme.background = blob
+      await this.theme.put(theme)
+    } else {
+      await this.theme.add({background: blob})
+    }
+
+    return URL.createObjectURL(blob)
   }
 }
 

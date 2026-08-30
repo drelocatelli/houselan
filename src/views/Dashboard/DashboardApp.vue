@@ -1,21 +1,21 @@
 <script setup lang="ts">
 import { db } from '@/services/database.service';
 import {
-    IonButton,
-    IonButtons,
-    IonContent,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonModal,
-    IonPage,
-    IonRouterOutlet,
-    IonText,
-    IonTitle,
-    IonToolbar,
+  IonButton,
+  IonButtons,
+  IonContent,
+  IonHeader,
+  IonIcon,
+  IonInput,
+  IonModal,
+  IonPage,
+  IonRouterOutlet,
+  IonText,
+  IonTitle,
+  IonToolbar,
 } from '@ionic/vue';
 import { logOutOutline, settings } from 'ionicons/icons';
-import { inject, provide, reactive, ref } from 'vue';
+import { computed, inject, provide, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -25,34 +25,45 @@ const logoUrl = ref(appConfig.appLogo);
 
 const logoInput = ref<HTMLInputElement | null>(null);
 const selectedLogo = ref<File | null>(null);
-const logoPreview = ref("");
+const logoPreview = ref('');
 
 if (!appConfig) {
-  throw new Error("Configuração não encontrada.");
+  throw new Error('Configuração não encontrada.');
 }
 
 const appLogo = appConfig.appLogo;
+
+const backgroundStyle = computed(() => {
+  const url = appConfig.backgroundUrl.value;
+
+  return url
+    ? {
+        backgroundImage: `url("${url}")`,
+      }
+    : {};
+});
+
 
 const openLogoPicker = () => {
   logoInput.value?.click();
 };
 
 const onLogoSelected = (event: Event) => {
-const input = event.target as HTMLInputElement;
+  const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
 
   if (!file) return;
 
-  if (!file.type.startsWith("image/")) {
-    alert("Selecione um arquivo de imagem.");
-    input.value = "";
+  if (!file.type.startsWith('image/')) {
+    alert('Selecione um arquivo de imagem.');
+    input.value = '';
     return;
   }
 
   // Limita o tamanho para 5 MB
   if (file.size > 5 * 1024 * 1024) {
-    alert("A imagem deve ter no máximo 5 MB.");
-    input.value = "";
+    alert('A imagem deve ter no máximo 5 MB.');
+    input.value = '';
     return;
   }
 
@@ -62,10 +73,10 @@ const input = event.target as HTMLInputElement;
 
   selectedLogo.value = file;
   logoPreview.value = URL.createObjectURL(file);
-}
+};
 
-const saveLogo = async() => {
-      if (!selectedLogo.value) return;
+const saveLogo = async () => {
+  if (!selectedLogo.value) return;
 
   const currentLogo = await db.logo.toCollection().first();
 
@@ -84,17 +95,16 @@ const saveLogo = async() => {
 
   if (logoPreview.value) {
     URL.revokeObjectURL(logoPreview.value);
-    logoPreview.value = "";
+    logoPreview.value = '';
   }
 
   // Atualiza a logo exibida no restante do aplicativo
   await appConfig.getAppLogo();
 
   if (logoInput.value) {
-    logoInput.value.value = "";
+    logoInput.value.value = '';
   }
-}
-
+};
 
 const form = reactive({
   appName: appConfig.appName as string,
@@ -152,35 +162,36 @@ provide('appName', form.appName);
 
 <template>
   <IonPage id="dashboard">
-    <ion-content :fullscreen="true">
-      <IonHeader :translucent="true">
-        <IonToolbar>
-          <IonTitle>
-            <div class="brand-container" style="display: flex; flex-direction: row; align-items: center; gap: 10px">
-              <img :src="logoUrl" alt="" width="40" />
-              <span class="brand-text">
-                {{ form.appName }}
-              </span>
-            </div>
-          </IonTitle>
-          <IonButton class="settings_btn" slot="end" fill="clear" style="--color: #fff" @click="openSettings">
-            <IonIcon :icon="settings"></IonIcon>
-            <div class="header-btn" style="margin-left: 5px">
-              <span>Configurações</span>
-            </div>
-          </IonButton>
-          <IonButton class="logout_btn" slot="end" fill="clear" style="--color: #fff" @click="logout">
-            <IonIcon :icon="logOutOutline"></IonIcon>
-            <div class="header-btn" style="margin-left: 5px">
-              <span>Sair</span>
-            </div>
-          </IonButton>
-        </IonToolbar>
-      </IonHeader>
+    <IonHeader :translucent="true">
+      <IonToolbar>
+        <IonTitle>
+          <div class="brand-container" style="display: flex; flex-direction: row; align-items: center; gap: 10px">
+            <img :src="logoUrl" alt="" width="40" />
+            <span class="brand-text">
+              {{ form.appName }}
+            </span>
+          </div>
+        </IonTitle>
+        <IonButton class="settings_btn" slot="end" fill="clear" style="--color: #fff" @click="openSettings">
+          <IonIcon :icon="settings"></IonIcon>
+          <div class="header-btn" style="margin-left: 5px">
+            <span>Configurações</span>
+          </div>
+        </IonButton>
+        <IonButton class="logout_btn" slot="end" fill="clear" style="--color: #fff" @click="logout">
+          <IonIcon :icon="logOutOutline"></IonIcon>
+          <div class="header-btn" style="margin-left: 5px">
+            <span>Sair</span>
+          </div>
+        </IonButton>
+      </IonToolbar>
+    </IonHeader>
+    <ion-content class="ion-padding">
       <main>
         <IonRouterOutlet id="dashboard-outlet"></IonRouterOutlet>
+        <div v-if="appConfig.backgroundUrl" id="background" :style="backgroundStyle"></div>
       </main>
-
+      
       <IonModal ref="settingsModal" id="settingsModal" :backdrop-dismiss="false" :show-backdrop="true">
         <IonHeader>
           <IonToolbar>
@@ -223,6 +234,25 @@ provide('appName', form.appName);
 </template>
 
 <style scoped>
+ion-header {
+  & ion-toolbar {
+    &::part(background) {
+      background: rgba(0, 0, 0, 0.589);
+    }
+  }
+}
+
+#background {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+}
+
 ion-modal {
   --backdrop-opacity: 0.7;
 
@@ -269,7 +299,6 @@ ion-modal {
   border-radius: 12px;
   padding: 8px;
 }
-
 
 @media screen and (max-width: 800px) {
   .header-btn {

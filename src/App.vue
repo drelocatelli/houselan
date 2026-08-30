@@ -4,13 +4,17 @@ import { onBeforeUnmount, onMounted, provide, ref } from 'vue';
 import { db } from './services/database.service';
 
 const appName = ref('');
+
 const appLogo = ref<Blob | any>(null)
 let logoObjectUrl: string | null = null;
+
+const backgroundUrl = ref<string>(null)
 
 onMounted(async () => {
   await Promise.all([
     getAppName(),
     getAppLogo(),
+    getTheme(),    
   ]);
 });
 
@@ -44,12 +48,18 @@ const getAppLogo = async () => {
   }
 };
 
+const getTheme = async () => {
+  const theme = await db.getTheme()
+  backgroundUrl.value = theme
+}
+
 
 provide('config', {
   appName,
   getAppName,
   appLogo,
-  getAppLogo
+  getAppLogo,
+  backgroundUrl,
 })
 </script>
 
