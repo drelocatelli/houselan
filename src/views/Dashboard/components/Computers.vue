@@ -161,6 +161,8 @@ const removeAllComputers = async() => {
     user-select: none; 
     flex-wrap: wrap;
     margin: 1rem 3rem;
+    height: max-content;
+    overflow-y: auto;
     
     & .computer {
         cursor: pointer;
