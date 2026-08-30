@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { IonPage } from '@ionic/vue';
+import Computers from './components/Computers.vue';
 
 </script>
 
 <template>
     <IonPage>
-        aa
+        <Computers />
     </IonPage>
 </template>

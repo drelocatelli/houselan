@@ -164,7 +164,7 @@ const recoverPasswordSubmit = async() => {
               <a href="#" @click.prevent="recoverPassword"> Esqueci minha senha </a>
             </div>
 
-            <ion-button type="submit" expand="block" class="login-button" :disabled="!form.password">
+            <ion-button type="submit" expand="block" class="default-btn" :disabled="!form.password">
               {{ isFirstLogin ? 'Criar conta' : isLogging ? 'Autenticando...' : 'Entrar' }}
               <ion-icon slot="end" :icon="logInOutline" />
             </ion-button>
@@ -222,7 +222,7 @@ const recoverPasswordSubmit = async() => {
                   <ion-icon :icon="form.showPassword ? eyeOffOutline : eyeOutline" />
                 </button>
               </div>
-              <IonButton type="submit" expand="block" class="login-button" :disabled="!form.password">
+              <IonButton type="submit" expand="block" class="default-btn" :disabled="!form.password">
                 Salvar
               </IonButton>
               </form>
@@ -311,44 +311,6 @@ section.login-card {
   fill: #080808;
 }
 
-.input-wrapper {
-  position: relative;
-  min-height: 58px;
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-  padding-left: 46px;
-  border: 1px solid rgb(255 255 255 / 4%);
-  border-radius: 11px;
-  background: #000;
-  transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease;
-}
-
-.input-wrapper:focus-within {
-  border-color: var(--ion-color-primary);
-  box-shadow: 0 0 0 3p color-mix(in srgb, var(--ion-color-primary) 22%, transparent);
-}
-
-.input-icon {
-  position: absolute;
-  left: 18px;
-  z-index: 2;
-  color: var(--login-icon);
-  font-size: 21px;
-}
-
-.input-wrapper ion-input {
-  --color: var(--login-text);
-  --placeholder-color: #aaa;
-  --highlight-color-focused: var(--ion-color-primary);
-  --padding-start: 0;
-  --padding-end: 54px;
-  --padding-top: 7px;
-  --padding-bottom: 0;
-  font-size: 16px;
-}
 
 .show-password {
   position: absolute;
@@ -366,8 +328,7 @@ section.login-card {
 }
 
 .show-password:focus-visible,
-.forgot-password a:focus-visible,
-.login-button:focus-visible {
+.forgot-password a:focus-visible {
   outline: 3px solid var(--ion-color-primary-tint);
   outline-offset: 3px;
 }
@@ -387,23 +348,6 @@ section.login-card {
 .forgot-password a:hover {
   color: var(--ion-color-primary-tint);
   text-decoration: underline;
-}
-
-.login-button {
-  --background: var(--ion-color-primary);
-  --background-activated: var(--ion-color-primary-shade);
-  --background-hover: var(--ion-color-primary-tint);
-  --border-radius: 11px;
-  --box-shadow: none;
-  height: 51px;
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  text-transform: none;
-}
-
-.login-button ion-icon {
-  font-size: 25px;
 }
 
 .login-footer {
@@ -435,12 +379,6 @@ section.login-card {
 
   .brand-logo {
     margin-bottom: 24px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .input-wrapper {
-    transition: none;
   }
 }
 </style>

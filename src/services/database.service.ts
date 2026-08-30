@@ -21,11 +21,17 @@ export interface Theme {
   background?: Blob
 }
 
+export interface Computer {
+  id?: number;
+  title?: string
+}
+
 export class AppDatabase extends Dexie {
   users!: Table<User>;
   config!: Table<Config>;
   logo!: Table<Logo>;
   theme!: Table<Theme>;
+  computers!: Table<Computer>;
 
   constructor() {
     super('AppDatabase');
@@ -34,7 +40,8 @@ export class AppDatabase extends Dexie {
       users: '++id, isLoggedIn',
       config: '++key, appName',
       logo: '++id, file',
-      theme: '++id, background'
+      theme: '++id, background',
+      computers: '++id, title',
     });
 
     this.version(1).stores({
