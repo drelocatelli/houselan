@@ -24,6 +24,7 @@ if (!appConfig) {
 const form = reactive({
   appName: '',
   logoUrl: '',
+  pricePerHour: 0
 });
 
 const getAppConfig = async () => {
@@ -31,6 +32,7 @@ const getAppConfig = async () => {
   appConfig.appName = appConfigRes?.appName;
   form.appName = appConfigRes?.appName || '';
   appConfig.pricePerHour = appConfigRes?.pricePerHour || 0;
+  form.pricePerHour = appConfigRes?.pricePerHour || 0;
 };
 
 const getAppLogo = async () => {
