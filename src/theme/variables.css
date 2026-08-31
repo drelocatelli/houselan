@@ -193,21 +193,34 @@ button {
     background 160ms ease,
     border-color 160ms ease,
     transform 160ms ease;
+    
+    &:hover {
+      border-color: #42d9e6;
+      background: #42d9e6;
+    }
+    &:active {
+      transform: translateY(1px);
+    }
+    
+    &:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 3px;
+    }
+
+    &.outline {
+      background-color: transparent;
+      border-color: #16c7d8;
+      color: #16c7d8;
+
+      &:hover {
+        background-color: #0f94a3a8;
+        color: #fff;
+      }
+    }
+    
 }
 
-button:hover {
-  border-color: #42d9e6;
-  background: #42d9e6;
-}
 
-button:active {
-  transform: translateY(1px);
-}
-
-button:focus-visible {
-  outline: 2px solid #ffffff;
-  outline-offset: 3px;
-}
 
   @media (prefers-reduced-motion: reduce) {
   .input-wrapper {

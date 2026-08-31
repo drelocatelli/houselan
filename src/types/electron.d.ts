@@ -10,9 +10,15 @@ export interface ElectronConfigAPI {
   set: (key: string, value: string) => Promise<AppProperties>;
 }
 
+export interface ElectronAPI {
+  openExternal: (url: string) => void;
+  setIcon: (iconData: string) => Promise<boolean>;
+}
+
 // Estende a interface Window global do navegador
 declare global {
   interface Window {
     config: ElectronConfigAPI;
+    electronAPI?: ElectronAPI;
   }
 }

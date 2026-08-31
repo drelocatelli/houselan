@@ -7,7 +7,10 @@ console.log('User Preload!');
 contextBridge.exposeInMainWorld('electronAPI', {
   openExternal: (url: string): void => {
     ipcRenderer.send('open-external', url);
-  }
+  },
+  setIcon: (iconData: string): Promise<boolean> => {
+    return ipcRenderer.invoke('set-icon', iconData);
+  },
 });
 
 contextBridge.exposeInMainWorld('config', {

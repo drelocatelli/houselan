@@ -3,6 +3,7 @@ import { IonApp, IonButton, IonButtons, IonIcon, IonModal, IonRouterOutlet } fro
 import { close, settings } from 'ionicons/icons';
 import { onBeforeUnmount, onMounted, provide, reactive, ref } from 'vue';
 import { db } from './services/database.service';
+import { fileToDataURL } from './utis/file';
 import AppConfig from './views/components/AppConfig.vue';
 
 const appConfig = reactive({
@@ -24,7 +25,6 @@ const form = reactive({
   logoUrl: ''
 });
 
-
 const getAppName = async () => {
   const appConfigRes = await db.config.toCollection().first();
   appConfig.appName = appConfigRes?.appName;
@@ -44,6 +44,15 @@ const getAppLogo = async () => {
     logoObjectUrl = URL.createObjectURL(logo.file);
     appConfig.appLogo = logoObjectUrl;
     form.logoUrl = logoObjectUrl;
+
+    try {
+      const dataUrl = await fileToDataURL(logo.file);
+      if (window.electronAPI?.setIcon) {
+        await window.electronAPI.setIcon(dataUrl);
+      }
+    } catch (err) {
+      console.error('Erro ao definir o ícone do aplicativo na inicialização:', err);
+    }
   } else {
     // Imagem padrão localizada em public/logo.png
     appConfig.appLogo = '/logo.png';
@@ -56,12 +65,12 @@ const getTheme = async () => {
   appConfig.backgroundUrl = theme;
 };
 
-const saveSettings = async() => {
-  console.log('save!')
+const loadAll = async() => {
+  await Promise.all([getAppName(), getAppLogo(), getTheme()]);
 }
 
-onMounted(async () => {
-  await Promise.all([getAppName(), getAppLogo(), getTheme()]);
+onMounted(() => {
+  loadAll();
 });
 
 onBeforeUnmount(() => {
@@ -106,7 +115,7 @@ provide('config', appConfig);
         </IonButtons>
       </header>
       <div class="container">
-        <AppConfig v-model="form" :onSubmit="saveSettings" />
+        <AppConfig v-model="form" @onSaved="loadAll" />
       </div>
     </IonModal>
   </ion-app>

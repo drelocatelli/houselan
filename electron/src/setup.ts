@@ -12,6 +12,8 @@ import path, { join } from 'path';
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
 console.log('Electron loaded')
 
+let mainWindowGlobal;
+
 const reloadWatcher = {
   debouncer: null,
   ready: false,
@@ -153,6 +155,7 @@ export class ElectronCapacitorApp {
         preload: preloadPath,
       },
     });
+    mainWindowGlobal = this.MainWindow;
 
     this.MainWindow.webContents.on('context-menu', (_event, params) => {
       const menu = Menu.buildFromTemplate([
@@ -417,4 +420,19 @@ ipcMain.handle("set-properties", (_event, key: string, value: string) => {
   
   // Opcional: Retorna o objeto atualizado
   return parseProperties(newLines.join("\n"));
+});
+
+ipcMain.handle('set-icon', async (_, dataUrl: string) => {
+  if (!dataUrl) return false;
+  const icon = nativeImage.createFromDataURL(dataUrl);
+
+  if (icon.isEmpty()) {
+    console.error('Não foi possível carregar o ícone.');
+    return false;
+  }
+
+  if (mainWindowGlobal && (process.platform === 'win32' || process.platform === 'linux')) {
+    mainWindowGlobal.setIcon(icon);
+  }
+  return true;
 });
