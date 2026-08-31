@@ -1,43 +1,57 @@
 <script setup>
-import { IonButton, IonIcon } from '@ionic/vue';
-import { checkmark } from 'ionicons/icons';
-import { ref } from 'vue';
+import { IonButton, IonIcon, IonModal } from '@ionic/vue';
+import { checkmark, close } from 'ionicons/icons';
+import { computed, inject, reactive, ref } from 'vue';
+
+const addStationModal = ref();
+
+const appConfig = inject('config');
+
+const form = reactive({
+  title: '',
+  status: 'free',
+  user: '',
+  time: '00:00',
+});
+
+const price = computed(() => {
+  if (!form.time) return 0;
+
+  const [hours, minutes] = form.time.split(':').map(Number);
+
+  const totalMinutes = hours * 60 + minutes;
+  const pricePerHour = Number(appConfig?.pricePerHour) || 0;
+
+  return (totalMinutes / 60) * pricePerHour;
+});
+
 
 const getStatusLabel = (status) => {
   const labels = {
     in_use: 'Em uso',
     free: 'Livre',
-    maintenance: 'Manutenção'
+    maintenance: 'Manutenção',
   };
   return labels[status] || status;
 };
 
-const stations = ref(
-    []
-    // [
-    //     { id: 1, title: 'PC-1213342', status: 'in_use', time: '01h 18m', user: 'Lucas Andrade', price: 'R$ 8,00' },
-    //     { id: 2, title: 'PC-1213343', status: 'in_use', time: '00h 00m', user: 'Cliente avulso', price: 'R$ 0,00' },
-    //     { id: 3, title: 'PC-1213344', status: 'in_use', time: '02h 06m', user: 'Mariana Lima', price: 'R$ 12,00', hasMenu: true },
-    //     { id: 4, title: 'PC-1213345', status: 'in_use', time: '00h 44m', user: 'João Pedro', price: 'R$ 5,00' },
-    //     { id: 5, title: 'PC-1213346', status: 'free' },
-    //     { id: 6, title: 'PC-1213347', status: 'maintenance' },
-    //     { id: 7, title: 'PC-1213348', status: 'in_use', time: '01h 32m', user: 'Ana Clara', price: 'R$ 9,50' },
-    //     { id: 8, title: 'PC-1213349', status: 'free' },
-    //     { id: 9, title: 'PC-1213350', status: 'in_use', time: '02h 48m', user: 'Bruno Costa', price: 'R$ 16,00' }
-    // ]
-);
-</script>
+const stations = ref([]);
 
+const addStation = async () => {
+  console.log(addStationModal);
+  await addStationModal.value?.$el.present();
+};
+
+defineExpose({
+  addStation,
+});
+</script>
 
 <template>
   <div class="container">
     <!-- Grid de Estações -->
     <div class="grid">
-      <div 
-        v-for="station in stations" 
-        :key="station.id"
-        class="card"
-      >
+      <div v-for="station in stations" :key="station.id" class="card">
         <!-- Topo do Card -->
         <div>
           <div class="card-header">
@@ -55,7 +69,12 @@ const stations = ref(
 
             <button v-if="station.hasMenu" class="menu-btn">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
+                />
               </svg>
             </button>
           </div>
@@ -86,18 +105,78 @@ const stations = ref(
           <!-- Se livre -->
           <template v-else-if="station.status === 'free'">
             <IonButton fill="clear" class="start-btn">
-              <IonIcon :icon="checkmark" style="margin-right: 10px;"></IonIcon>
-              <span>
-                  Iniciar sessão
-              </span>
+              <IonIcon :icon="checkmark" style="margin-right: 10px"></IonIcon>
+              <span> Iniciar sessão </span>
             </IonButton>
           </template>
         </div>
       </div>
     </div>
   </div>
-</template>
+  <IonModal ref="addStationModal" style="--height: min-height" :backdrop-dismiss="false">
+    <header>
+      <span class="title">Nova estação</span>
+      <IonButton fill="clear" style="color: #fff" size="small" slot="start" @click="addStationModal.$el.dismiss()">
+        <IonIcon :icon="close" style="color: #fff"></IonIcon>
+      </IonButton>
+    </header>
+    <div class="container" style="margin: 0">
+      <div style="display: flex; align-items: center; gap: 1rem">
+        <form method="post" style="display: flex; flex-direction: column; gap: 10px">
+          <div>
+            <label for="user">Nome do cliente</label>
+            <input type="text" name="user" id="user" v-model="form.user" />
+          </div>
 
+          <div>
+            <label for="name">Título da estação</label>
+            <input type="text" name="name" id="name" v-model="form.title" required />
+          </div>
+
+          <div>
+            <label for="status">Status da estação:</label>
+            <select name="status" id="status" v-model="form.status" required>
+              <option value="free">Livre</option>
+              <option value="in_use">Em uso</option>
+              <option value="maintenance">Em manutenção</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="time">Horas de uso</label>
+             <input
+                id="time"
+                name="time"
+                type="time"
+                min="00:00"
+                step="60"
+                v-model="form.time"
+              />
+          </div>
+
+          <div>
+            <label for="price">Valor total a ser pago</label>
+            <input
+              type="text"
+              :value="
+                price.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                })
+              "
+              disabled
+            />
+            <span class="title" style="color: #666"> Valor por hora: {{ appConfig.pricePerHour }} </span>
+          </div>
+
+          <div>
+            <button type="submit">Reservar estação</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </IonModal>
+</template>
 
 <style scoped>
 .container {
@@ -116,7 +195,7 @@ const stations = ref(
   margin-bottom: 24px;
 }
 
-.title {
+.title:not(ion-modal .title) {
   font-size: 1.5rem;
   font-weight: 700;
   color: #111827;
@@ -272,9 +351,15 @@ const stations = ref(
   border-radius: 50%;
 }
 
-.badge.in_use .dot { background-color: #2563eb; }
-.badge.free .dot { background-color: #059669; }
-.badge.maintenance .dot { background-color: #d97706; }
+.badge.in_use .dot {
+  background-color: #2563eb;
+}
+.badge.free .dot {
+  background-color: #059669;
+}
+.badge.maintenance .dot {
+  background-color: #d97706;
+}
 
 .time {
   font-size: 0.75rem;

@@ -15,16 +15,18 @@ http://ionicframework.com/docs/theming/ */
 
 }
 
-/* ion-app {
-  margin-top: 10px;
-} */
+ion-app,
+ion-modal {
+  background-color: #121212a1;
+  --background: #121212;
+}
+
 ion-app {
   padding-top: var(--ion-safe-area-top);
   padding-right: var(--ion-safe-area-right);
   padding-bottom: var(--ion-safe-area-bottom);
   padding-left: var(--ion-safe-area-left);
 }
-
 
 ion-button {
   --background-hover: #fff;
@@ -159,7 +161,8 @@ label {
   text-transform: uppercase;
 }
 
-input {
+input,
+& select {
   width: 100%;
   height: 42px;
   padding: 0 13px;
@@ -236,8 +239,24 @@ button {
     
 }
 
+label {
+  display: inline-block;
+  margin: 8px 0;
+}
+
 main ion-content::part(background) {
   --background: transparent;
+}
+
+header {
+  flex-shrink: 0;
+  padding: 1rem;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  border-bottom: 1px solid #68686844;
+  justify-content: space-between;
+
 }
 
 

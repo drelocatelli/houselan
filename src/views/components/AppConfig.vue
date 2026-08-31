@@ -5,7 +5,7 @@ import { modalController } from '@ionic/vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-const form = defineModel<{appName: string, logoUrl: string}>();
+const form = defineModel<{appName: string, logoUrl: string, pricePerHour: number}>();
 const logoInput = ref<HTMLInputElement | null>(null)
 const selectedLogo = ref<File | null>(null);
 const logoPreview = ref('');
@@ -51,6 +51,7 @@ const saveSettings = async () => {
       const result = await db.config.update(config.key, {
         key: 0,
         appName: form.value.appName,
+        pricePerHour: form.value.pricePerHour
       });
 
       console.log({ result });
@@ -58,6 +59,7 @@ const saveSettings = async () => {
       await db.config.add({
         key: 0,
         appName: form.value.appName,
+        pricePerHour: form.value.pricePerHour
       });
     }
 
@@ -132,7 +134,7 @@ const saveLogo = async () => {
           <label for="app-logo" style="color: #555;">Tamanho Recomendado: 511 x 570</label>
         </div>
 
-      <label for="app-name" style="margin-top: 1rem">Nome do aplicativo</label>
+      <label for="app-name" >Nome do aplicativo</label>
       <input
         id="app-name"
         v-model="form.appName"
@@ -140,6 +142,9 @@ const saveLogo = async () => {
         placeholder="Digite o nome do aplicativo"
         autocomplete="off"
       />
+
+      <label for="price">Valor por hora</label>
+      <input type="number" v-model="form.pricePerHour" id="price" />
 
     </div>
 

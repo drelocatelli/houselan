@@ -14,6 +14,7 @@ export interface User {
 export interface Config {
   appName: string;
   key: any;
+  pricePerHour: number
 }
 
 export interface Theme {
@@ -48,17 +49,18 @@ export class AppDatabase extends Dexie {
       logo: '++id, file',
     });
 
-    this.getAppName();
+    this.getAppConfig();
     this.getAppLogo();
     this.getTheme()
   }
 
-  async getAppName() {
+  async getAppConfig() {
     const config = await this.config.toCollection().first();
     if (!config?.appName) {
       this.config.add({
         appName: 'HouseLan',
         key: 0,
+        pricePerHour: 0
       });
     }
   }

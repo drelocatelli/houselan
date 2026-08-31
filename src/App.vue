@@ -10,7 +10,8 @@ const appConfig = reactive({
   logoUrl: '',
   appName: '',
   backgroundUrl: '',
-  appLogo: null as Blob | any
+  appLogo: null as Blob | any,
+  pricePerHour: 0
 })
 
 const configModal = ref()
@@ -22,13 +23,14 @@ if (!appConfig) {
 
 const form = reactive({
   appName: '',
-  logoUrl: ''
+  logoUrl: '',
 });
 
-const getAppName = async () => {
+const getAppConfig = async () => {
   const appConfigRes = await db.config.toCollection().first();
   appConfig.appName = appConfigRes?.appName;
   form.appName = appConfigRes?.appName || '';
+  appConfig.pricePerHour = appConfigRes?.pricePerHour || 0;
 };
 
 const getAppLogo = async () => {
@@ -66,7 +68,7 @@ const getTheme = async () => {
 };
 
 const loadAll = async() => {
-  await Promise.all([getAppName(), getAppLogo(), getTheme()]);
+  await Promise.all([getAppConfig(), getAppLogo(), getTheme()]);
 }
 
 onMounted(() => {
@@ -125,14 +127,6 @@ provide('config', appConfig);
 
 <style scoped>
 header {
-  flex-shrink: 0;
-  padding: 1rem;
-  display: flex;
-  gap: 5px;
-  align-items: center;
-  border-bottom: 1px solid #68686844;
-  justify-content: space-between;
-
   & .header-logo {
     display: flex;
     flex-direction: row;
