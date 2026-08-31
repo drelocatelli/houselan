@@ -104,7 +104,7 @@ provide('config', appConfig);
         <ion-router-outlet />
       </main>
 
-    <IonModal ref="configModal" :backdrop-dismiss="false">
+    <IonModal ref="configModal" :backdrop-dismiss="false" style="--height: min-height">
       <header>
         <span class="title">Configurações</span>
         <IonButtons slot="end">

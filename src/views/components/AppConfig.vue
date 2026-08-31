@@ -115,21 +115,12 @@ const saveLogo = async () => {
 <template>
   <form class="settings-form" @submit.prevent="saveSettings">
     <div class="field">
-      <label for="app-name">Nome do aplicativo</label>
-
-      <input
-        id="app-name"
-        v-model="form.appName"
-        type="text"
-        placeholder="Digite o nome do aplicativo"
-        autocomplete="off"
-      />
 
       <div class="logo-field">
         <label for="app-logo">Logo</label>
 
         <div style="display: flex; align-items: center; gap: 1rem;">
-            <div>
+            <div style="margin: 1rem 0;">
                 <img :src="form.logoUrl" alt="" width="40" />
                 <input ref="logoInput" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden  />
             </div>
@@ -140,6 +131,15 @@ const saveLogo = async () => {
           </div>
           <label for="app-logo" style="color: #555;">Tamanho Recomendado: 511 x 570</label>
         </div>
+
+      <label for="app-name" style="margin-top: 1rem">Nome do aplicativo</label>
+      <input
+        id="app-name"
+        v-model="form.appName"
+        type="text"
+        placeholder="Digite o nome do aplicativo"
+        autocomplete="off"
+      />
 
     </div>
 
