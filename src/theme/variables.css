@@ -19,7 +19,6 @@ http://ionicframework.com/docs/theming/ */
   margin-top: 10px;
 } */
 ion-app {
-  background-color: ;
   padding-top: var(--ion-safe-area-top);
   padding-right: var(--ion-safe-area-right);
   padding-bottom: var(--ion-safe-area-bottom);
