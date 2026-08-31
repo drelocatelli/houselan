@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IonApp, IonButton, IonButtons, IonIcon, IonModal, IonRouterOutlet } from '@ionic/vue';
+import { IonApp, IonButton, IonButtons, IonHeader, IonIcon, IonModal, IonRouterOutlet } from '@ionic/vue';
 import { close, settings } from 'ionicons/icons';
 import { onBeforeUnmount, onMounted, provide, reactive, ref } from 'vue';
 import { db } from './services/database.service';
@@ -84,13 +84,14 @@ provide('config', appConfig);
 
 <template>
   <ion-app>
+    <IonHeader>
       <header>
         <div class="header-logo">
           <img :src="appConfig.appLogo" alt="Logo" width="30" />
           <span>{{ appConfig.appName }}</span>
         </div>
         <div>
-          <span class="title"> Visão geral </span>
+          <span class="title visao-geral"> Visão geral </span>
         </div>
         <div class="header-right">
           <IonButton @click="configModal?.$el.present()" size="small" fill="clear" style="color: #fff">
@@ -99,6 +100,7 @@ provide('config', appConfig);
           </IonButton>
         </div>
       </header>
+    </IonHeader>
 
       <main class="app-main">
         <ion-router-outlet />
@@ -146,5 +148,11 @@ header {
   flex: 1;
   position: relative;
   width: 100%;
+}
+
+@media screen and (max-width: 800px) {
+  .visao-geral {
+    display: none;
+  }
 }
 </style>
