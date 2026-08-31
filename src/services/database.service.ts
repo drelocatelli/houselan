@@ -41,7 +41,7 @@ export class AppDatabase extends Dexie {
       config: '++key, appName',
       logo: '++id, file',
       theme: '++id, background',
-      computers: '++id, title',
+      computers: 'id, title',
     });
 
     this.version(1).stores({

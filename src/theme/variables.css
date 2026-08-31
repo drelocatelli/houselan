@@ -109,11 +109,10 @@ a {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .input-wrapper {
-    transition: none;
-  }
+.title {
+  font-size: 12px; color: #aaa; text-transform: uppercase;
 }
+
 
 ion-action-sheet.remove-computers-action-sheet {
   --background: #292929;
@@ -129,3 +128,89 @@ ion-action-sheet.remove-computers-action-sheet {
   .ion-page {
     justify-content: initial;
   }
+
+  .field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+label {
+  color: #a9a9a9;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+input {
+  width: 100%;
+  height: 42px;
+  padding: 0 13px;
+  box-sizing: border-box;
+  border: 1px solid #2c2c2c;
+  border-radius: 4px;
+  outline: none;
+  background: #171717;
+  color: #f5f5f5;
+  font: inherit;
+  font-size: 14px;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+input::placeholder {
+  color: #696969;
+}
+
+input:hover {
+  border-color: #3b3b3b;
+}
+
+input:focus {
+  border-color: #16c7d8;
+  background: #1b1b1b;
+  box-shadow: 0 0 0 2px rgb(22 199 216 / 12%);
+}
+
+button {
+  align-self: flex-start;
+  height: 36px;
+  padding: 0 18px;
+  border: 1px solid #16c7d8;
+  border-radius: 4px;
+  background: #16c7d8;
+  color: #071113;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+button:hover {
+  border-color: #42d9e6;
+  background: #42d9e6;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+  @media (prefers-reduced-motion: reduce) {
+  .input-wrapper {
+    transition: none;
+  }
+}

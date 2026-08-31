@@ -1,33 +1,34 @@
 <script setup lang="ts">
-import { IonApp, IonRouterOutlet } from '@ionic/vue';
-import { onBeforeUnmount, onMounted, provide, ref } from 'vue';
+import { IonApp, IonButton, IonButtons, IonIcon, IonModal, IonRouterOutlet } from '@ionic/vue';
+import { close, settings } from 'ionicons/icons';
+import { onBeforeUnmount, onMounted, provide, reactive, ref } from 'vue';
 import { db } from './services/database.service';
+import AppConfig from './views/components/AppConfig.vue';
 
-const appName = ref('');
+const appConfig = reactive({
+  logoUrl: '',
+  appName: '',
+  backgroundUrl: '',
+  appLogo: null as Blob | any
+})
 
-const appLogo = ref<Blob | any>(null)
+const configModal = ref()
 let logoObjectUrl: string | null = null;
 
-const backgroundUrl = ref<string>(null)
+if (!appConfig) {
+  throw new Error('Configuração não encontrada.');
+}
 
-onMounted(async () => {
-  await Promise.all([
-    getAppName(),
-    getAppLogo(),
-    getTheme(),    
-  ]);
-});
-
-onBeforeUnmount(() => {
-  if (logoObjectUrl) {
-    URL.revokeObjectURL(logoObjectUrl);
-  }
+const form = reactive({
+  appName: '',
+  logoUrl: ''
 });
 
 
 const getAppName = async () => {
-  const appConfig = await db.config.toCollection().first();
-  appName.value = appConfig?.appName;
+  const appConfigRes = await db.config.toCollection().first();
+  appConfig.appName = appConfigRes?.appName;
+  form.appName = appConfigRes?.appName || '';
 };
 
 const getAppLogo = async () => {
@@ -41,30 +42,100 @@ const getAppLogo = async () => {
 
   if (logo?.file instanceof Blob) {
     logoObjectUrl = URL.createObjectURL(logo.file);
-    appLogo.value = logoObjectUrl;
+    appConfig.appLogo = logoObjectUrl;
+    form.logoUrl = logoObjectUrl;
   } else {
     // Imagem padrão localizada em public/logo.png
-    appLogo.value = "/logo.png";
+    appConfig.appLogo = '/logo.png';
+    form.logoUrl = '/logo.png';
   }
 };
 
 const getTheme = async () => {
-  const theme = await db.getTheme()
-  backgroundUrl.value = theme
+  const theme = await db.getTheme();
+  appConfig.backgroundUrl = theme;
+};
+
+const saveSettings = async() => {
+  console.log('save!')
 }
 
+onMounted(async () => {
+  await Promise.all([getAppName(), getAppLogo(), getTheme()]);
+});
 
-provide('config', {
-  appName,
-  getAppName,
-  appLogo,
-  getAppLogo,
-  backgroundUrl,
-})
+onBeforeUnmount(() => {
+  if (logoObjectUrl) {
+    URL.revokeObjectURL(logoObjectUrl);
+  }
+});
+
+provide('config', appConfig);
 </script>
 
 <template>
   <ion-app>
-    <ion-router-outlet />
+      <header>
+        <div class="header-logo">
+          <img :src="appConfig.appLogo" alt="Logo" width="30" />
+          <span>{{ appConfig.appName }}</span>
+        </div>
+        <div>
+          <span class="title"> Visão geral </span>
+        </div>
+        <div class="header-right">
+          <IonButton @click="configModal?.$el.present()" size="small" fill="clear" style="color: #fff">
+            <IonIcon :icon="settings" style="margin-right: 8px; font-size: 15px"></IonIcon>
+            <span>Configurações</span>
+          </IonButton>
+        </div>
+      </header>
+
+      <main class="app-main">
+        <ion-router-outlet />
+      </main>
+
+    <IonModal ref="configModal" :backdrop-dismiss="false">
+      <header>
+        <span class="title">Configurações</span>
+        <IonButtons slot="end">
+          <IonButton @click="configModal?.$el.dismiss()">
+            <IonIcon :icon="close" style="margin-right: 8px; font-size: 15px"></IonIcon>
+            <span>Fechar</span>
+          </IonButton>
+        </IonButtons>
+      </header>
+      <div class="container">
+        <AppConfig v-model="form" :onSubmit="saveSettings" />
+      </div>
+    </IonModal>
   </ion-app>
 </template>
+
+<style scoped>
+header {
+  flex-shrink: 0;
+  padding: 1rem;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  border-bottom: 1px solid #68686844;
+  justify-content: space-between;
+
+  & .header-logo {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    height: 30px;
+    padding-right: 10px;
+    margin-right: 5px;
+  }
+}
+
+.app-main {
+  flex: 1;
+  position: relative;
+  width: 100%;
+}
+</style>
