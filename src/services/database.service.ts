@@ -27,26 +27,32 @@ export interface Computer {
   title?: string
 }
 
+export interface Station {
+  id?: number;
+  title: string;
+  status: 'free' | 'in_use' | 'maintenance';
+  user: string;
+  time: number;
+}
+
 export class AppDatabase extends Dexie {
   users!: Table<User>;
   config!: Table<Config>;
   logo!: Table<Logo>;
   theme!: Table<Theme>;
   computers!: Table<Computer>;
+  stations!: Table<Station, number>;
 
   constructor() {
     super('AppDatabase');
 
     this.version(1).stores({
       users: '++id, isLoggedIn',
-      config: '++key, appName',
-      logo: '++id, file',
-      theme: '++id, background',
-      computers: 'id, title',
-    });
-
-    this.version(1).stores({
-      logo: '++id, file',
+      config: 'key, appName',
+      logo: '++id',
+      theme: '++id',
+      computers: '++id, title',
+      stations: '++id',
     });
 
     this.getAppConfig();

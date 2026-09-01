@@ -1,5 +1,5 @@
 import { fileToDataURL } from "@/utis/file";
-import { db } from "./database.service";
+import { db, Station } from "./database.service";
 
 export default class DataService {
     data: {
@@ -70,6 +70,15 @@ export default class DataService {
     async getTheme() {
         const theme = await db.getTheme()
         this.data.backgroundUrl = theme;
+    }
+
+    async getStations() {
+        return await db.stations.toArray()
+    }
+
+    async addNewStation(data: Station) {
+        await db.stations.add(data)
+        return await db.stations.toArray()
     }
 
     
