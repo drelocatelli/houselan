@@ -259,7 +259,7 @@ m3319 -31 c173 -520 176 -536 132 -629 -50 -109 -140 -155 -302 -155 l-91 0
       </div>
     </div>
   </div>
-  <IonModal ref="addStationModal" style="--height: min-height" :backdrop-dismiss="false">
+  <IonModal ref="addStationModal" class="max" :backdrop-dismiss="false">
     <header>
       <span class="title">Nova estação</span>
       <IonButton

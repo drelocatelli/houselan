@@ -341,6 +341,14 @@ header {
   }
 }
 
+ion-modal.max {
+  --width: max-content;
+  --height: min-content;
+}
+
+ion-modal .container {
+  overflow-x: auto;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .input-wrapper {

@@ -59,13 +59,12 @@ provide('config', appConfig);
         <ion-router-outlet />
       </main>
 
-    <IonModal ref="configModal" :backdrop-dismiss="false" style="--height: min-height">
+    <IonModal ref="configModal" class="max"  style="--height: min-height">
       <header>
         <span class="title">Configurações</span>
         <IonButtons slot="end">
           <IonButton @click="configModal?.$el.dismiss()">
-            <IonIcon :icon="close" style="margin-right: 8px; font-size: 15px"></IonIcon>
-            <span>Fechar</span>
+            <IonIcon :icon="close" style="font-size: 15px"></IonIcon>
           </IonButton>
         </IonButtons>
       </header>

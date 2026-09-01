@@ -131,7 +131,6 @@ const saveLogo = async () => {
         <div style="display: flex; align-items: center; gap: 1rem;">
             <div style="margin: 1rem 0;">
                 <img :src="form.logoUrl" alt="" width="40" />
-                <input ref="logoInput" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden  />
             </div>
             <div>
                 <button class="outline" type="button" @click="openLogoPicker">Alterar</button>
@@ -148,10 +147,11 @@ const saveLogo = async () => {
         type="text"
         placeholder="Digite o nome do aplicativo"
         autocomplete="off"
+         style="min-width: 400px;"
       />
 
       <label for="price">Valor por hora</label>
-      <input type="number" v-model="form.pricePerHour" id="price" />
+      <input type="number" v-model="form.pricePerHour" id="price" style="min-width: 400px;" />
 
     </div>
 
