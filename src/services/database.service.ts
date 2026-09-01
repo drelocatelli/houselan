@@ -31,7 +31,7 @@ export interface Station {
   id?: number;
   title: string;
   status: 'free' | 'in_use' | 'maintenance';
-  user: string;
+  user?: string;
   time: number;
 }
 

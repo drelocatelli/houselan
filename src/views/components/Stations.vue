@@ -150,9 +150,12 @@ defineExpose({
                   width="26px"
                   height="26px"
                   viewBox="0 0 512.000000 512.000000"
+                  class="icon"
+                  
                   preserveAspectRatio="xMidYMid meet"
+                  stroke="currentColor"
                 >
-                  <g transform="translate(0.000000,512.000000) scale(0.100000,-0.100000)" fill="#4dd171" stroke="none">
+                  <g transform="translate(0.000000,512.000000) scale(0.100000,-0.100000)" :fill="(station.status === 'free') ? '#4dd171' : (station.status === 'in_use') ? '#749be1' : '#e8e8e8'" stroke="none">
                     <path
                       d="M2450 5115 c-8 -2 -49 -9 -90 -15 -212 -35 -405 -135 -573 -299 -135
 -131 -225 -274 -280 -446 -50 -155 -52 -177 -52 -565 0 -351 1 -367 21 -410
@@ -206,7 +209,7 @@ m3319 -31 c173 -520 176 -536 132 -629 -50 -109 -140 -155 -302 -155 l-91 0
               </div>
               <div style="display: flex; flex-direction: column; gap: 8px">
                 <span class="station-code">Estação: {{ station.title }}</span>
-                <span class="station-code" style="font-size: 12px; color: #fff">cliente: {{ station.user }}</span>
+                <span class="station-code" style="font-size: 12px; color: #fff" v-show="station.user">cliente: {{ station.user }}</span>
               </div>
             </div>
 
@@ -276,8 +279,8 @@ m3319 -31 c173 -520 176 -536 132 -629 -50 -109 -140 -155 -302 -155 l-91 0
       <div style="display: flex; align-items: center; gap: 1rem">
         <form method="post" style="display: flex; flex-direction: column; gap: 10px" @submit.prevent="newStation">
           <div>
-            <label for="user">Nome do cliente</label>
-            <input type="text" name="user" id="user" v-model="form.user" required />
+            <label for="user">Nome do cliente (opcional)</label>
+            <input type="text" name="user" id="user" v-model="form.user" />
           </div>
 
           <div>
