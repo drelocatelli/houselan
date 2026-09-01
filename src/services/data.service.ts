@@ -63,7 +63,7 @@ export default class DataService {
                 console.error(err)
             }
         } else {
-            this.data.logoUrl = '/logon.png'
+            this.data.logoUrl = '/logo.png'
         }
     }
 

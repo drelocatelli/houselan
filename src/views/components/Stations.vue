@@ -2,6 +2,7 @@
 import { IonButton, IonIcon, IonModal } from '@ionic/vue';
 import { checkmark, close } from 'ionicons/icons';
 import { computed, inject, reactive, ref } from 'vue';
+import TimeInput from './TimeInput.vue';
 
 const addStationModal = ref();
 
@@ -11,19 +12,23 @@ const form = reactive({
   title: '',
   status: 'free',
   user: '',
-  time: '00:00',
+  time: 0,
 });
 
 const price = computed(() => {
-  if (!form.time) return 0;
+  const totalSeconds = Number(form.time) || 0;
 
-  const [hours, minutes] = form.time.split(':').map(Number);
+  if (totalSeconds <= 0) {
+    return 0;
+  }
 
-  const totalMinutes = hours * 60 + minutes;
   const pricePerHour = Number(appConfig?.pricePerHour) || 0;
 
-  return (totalMinutes / 60) * pricePerHour;
+  const totalHours = totalSeconds / 3600;
+
+  return totalHours * pricePerHour;
 });
+
 
 
 const getStatusLabel = (status) => {
@@ -143,13 +148,18 @@ defineExpose({
 
           <div>
             <label for="time">Horas de uso</label>
-             <input
+             <!-- <input
                 id="time"
                 name="time"
                 type="time"
                 min="00:00"
                 step="60"
                 v-model="form.time"
+              /> -->
+              <time-input
+                :initial-seconds="form.time || 0"
+                :running="form.status === 'in_use'"
+                @update:seconds="form.time = $event"
               />
           </div>
 

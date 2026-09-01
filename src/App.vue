@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { IonApp, IonButton, IonButtons, IonHeader, IonIcon, IonModal, IonRouterOutlet } from '@ionic/vue';
 import { close, settings } from 'ionicons/icons';
-import { onMounted, provide, reactive, ref } from 'vue';
+import { onBeforeMount, provide, reactive, ref } from 'vue';
 import DataService from './services/data.service.js';
 import AppConfig from './views/components/AppConfig.vue';
 
@@ -28,7 +28,7 @@ const loadAll = async() => {
   appConfig.pricePerHour = data.config.pricePerHour
 }
 
-onMounted(async () => {
+onBeforeMount(async () => {
   await loadAll()
 });
 
