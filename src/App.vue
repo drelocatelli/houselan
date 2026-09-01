@@ -1,86 +1,35 @@
 <script setup lang="ts">
 import { IonApp, IonButton, IonButtons, IonHeader, IonIcon, IonModal, IonRouterOutlet } from '@ionic/vue';
 import { close, settings } from 'ionicons/icons';
-import { onBeforeUnmount, onMounted, provide, reactive, ref } from 'vue';
-import { db } from './services/database.service';
-import { fileToDataURL } from './utis/file';
+import { onMounted, provide, reactive, ref } from 'vue';
+import DataService from './services/data.service.js';
 import AppConfig from './views/components/AppConfig.vue';
+
+const configModal = ref()
+
+const dataService = new DataService()
 
 const appConfig = reactive({
   logoUrl: '',
   appName: '',
   backgroundUrl: '',
-  appLogo: null as Blob | any,
   pricePerHour: 0
 })
-
-const configModal = ref()
-let logoObjectUrl: string | null = null;
 
 if (!appConfig) {
   throw new Error('Configuração não encontrada.');
 }
 
-const form = reactive({
-  appName: '',
-  logoUrl: '',
-  pricePerHour: 0
-});
-
-const getAppConfig = async () => {
-  const appConfigRes = await db.config.toCollection().first();
-  appConfig.appName = appConfigRes?.appName;
-  form.appName = appConfigRes?.appName || '';
-  appConfig.pricePerHour = appConfigRes?.pricePerHour || 0;
-  form.pricePerHour = appConfigRes?.pricePerHour || 0;
-};
-
-const getAppLogo = async () => {
-  const logo = await db.logo.toCollection().first();
-
-  // Libera a URL anterior, se existir
-  if (logoObjectUrl) {
-    URL.revokeObjectURL(logoObjectUrl);
-    logoObjectUrl = null;
-  }
-
-  if (logo?.file instanceof Blob) {
-    logoObjectUrl = URL.createObjectURL(logo.file);
-    appConfig.appLogo = logoObjectUrl;
-    form.logoUrl = logoObjectUrl;
-
-    try {
-      const dataUrl = await fileToDataURL(logo.file);
-      if (window.electronAPI?.setIcon) {
-        await window.electronAPI.setIcon(dataUrl);
-      }
-    } catch (err) {
-      console.error('Erro ao definir o ícone do aplicativo na inicialização:', err);
-    }
-  } else {
-    // Imagem padrão localizada em public/logo.png
-    appConfig.appLogo = '/logo.png';
-    form.logoUrl = '/logo.png';
-  }
-};
-
-const getTheme = async () => {
-  const theme = await db.getTheme();
-  appConfig.backgroundUrl = theme;
-};
-
 const loadAll = async() => {
-  await Promise.all([getAppConfig(), getAppLogo(), getTheme()]);
+  const data = await dataService.loadAll()
+  appConfig.logoUrl = data.logoUrl
+  appConfig.appName = data.config.appName
+  appConfig.backgroundUrl = data.backgroundUrl
+  appConfig.pricePerHour = data.config.pricePerHour
 }
 
-onMounted(() => {
-  loadAll();
-});
-
-onBeforeUnmount(() => {
-  if (logoObjectUrl) {
-    URL.revokeObjectURL(logoObjectUrl);
-  }
+onMounted(async () => {
+  await loadAll()
 });
 
 provide('config', appConfig);
@@ -91,7 +40,7 @@ provide('config', appConfig);
     <IonHeader>
       <header>
         <div class="header-logo">
-          <img :src="appConfig.appLogo" alt="Logo" width="30" />
+          <img :src="appConfig.logoUrl" alt="Logo" width="30" />
           <span>{{ appConfig.appName }}</span>
         </div>
         <div>
@@ -121,7 +70,7 @@ provide('config', appConfig);
         </IonButtons>
       </header>
       <div class="container">
-        <AppConfig v-model="form" @onSaved="loadAll" />
+        <AppConfig @onSaved="loadAll" />
       </div>
     </IonModal>
   </ion-app>

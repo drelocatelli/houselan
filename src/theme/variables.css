@@ -21,6 +21,7 @@ ion-modal {
   --background: #121212;
 }
 
+
 ion-app {
   padding-top: var(--ion-safe-area-top);
   padding-right: var(--ion-safe-area-right);
@@ -259,8 +260,7 @@ header {
 
 }
 
-
-  @media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
   .input-wrapper {
     transition: none;
   }

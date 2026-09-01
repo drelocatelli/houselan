@@ -58,7 +58,7 @@ export class AppDatabase extends Dexie {
     const config = await this.config.toCollection().first();
     if (!config?.appName) {
       this.config.add({
-        appName: 'HouseLan',
+        appName: 'RaccoonTech',
         key: 0,
         pricePerHour: 0
       });

@@ -38,7 +38,6 @@ const getStatusLabel = (status) => {
 const stations = ref([]);
 
 const addStation = async () => {
-  console.log(addStationModal);
   await addStationModal.value?.$el.present();
 };
 

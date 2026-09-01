@@ -2,15 +2,22 @@
 import { db } from '@/services/database.service';
 import { fileToDataURL } from '@/utis/file';
 import { modalController } from '@ionic/vue';
-import { ref } from 'vue';
+import { inject, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-const form = defineModel<{appName: string, logoUrl: string, pricePerHour: number}>();
+const router = useRouter()
+
+const appConfig = inject<any>('config');
+
 const logoInput = ref<HTMLInputElement | null>(null)
 const selectedLogo = ref<File | null>(null);
 const logoPreview = ref('');
 
-const router = useRouter()
+const form = reactive({
+  appName: appConfig.appName,
+  logoUrl: appConfig.logoUrl,
+  pricePerHour: appConfig.pricePerHour
+});
 
 const emit = defineEmits(['onSaved'])
 
@@ -35,12 +42,12 @@ const onLogoSelected = (event: Event) => {
     return;
   }
 
-  if (form.value.logoUrl) {
-    URL.revokeObjectURL(form.value.logoUrl);
+  if (form.logoUrl) {
+    URL.revokeObjectURL(form.logoUrl);
   }
 
   selectedLogo.value = file;
-  form.value.logoUrl = URL.createObjectURL(file);
+  form.logoUrl = URL.createObjectURL(file);
 }
 
 const saveSettings = async () => {
@@ -50,16 +57,16 @@ const saveSettings = async () => {
     if (config) {
       const result = await db.config.update(config.key, {
         key: 0,
-        appName: form.value.appName,
-        pricePerHour: form.value.pricePerHour
+        appName: form.appName,
+        pricePerHour: form.pricePerHour
       });
 
       console.log({ result });
     } else {
       await db.config.add({
         key: 0,
-        appName: form.value.appName,
-        pricePerHour: form.value.pricePerHour
+        appName: form.appName,
+        pricePerHour: form.pricePerHour
       });
     }
 
