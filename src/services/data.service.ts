@@ -81,5 +81,10 @@ export default class DataService {
         return await db.stations.toArray()
     }
 
+    async removeStation(id: number) {
+        await db.stations.delete(id)
+        return await db.stations.toArray()
+    }
+
     
 }

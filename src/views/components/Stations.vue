@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import DataService from '@/services/data.service.js';
 import { Station } from '@/services/database.service';
-import { IonButton, IonIcon, IonModal, IonSpinner } from '@ionic/vue';
-import { checkmark, close } from 'ionicons/icons';
+import { alertController, IonButton, IonIcon, IonModal, IonSpinner } from '@ionic/vue';
+import { checkmark, close, trash } from 'ionicons/icons';
 import { computed, inject, onMounted, reactive, ref } from 'vue';
 import TimeInput from './TimeInput.vue';
 
@@ -11,6 +11,7 @@ const appConfig = inject('config');
 const dataService = new DataService();
 
 const addStationModal = ref();
+
 const stations = reactive({
   isLoading: true,
   items: [] as Station[],
@@ -93,6 +94,35 @@ const loadStations = async () => {
   } finally {
     stations.isLoading = false;
   }
+};
+
+const openExcludeStation = async (id: number) => {
+  if (!id) return;
+
+  await alertController
+    .create({
+      header: 'Excluir estação',
+      message: 'Tem certeza de que deseja excluir esta estação?',
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+          cssClass: 'clear-button',
+        },
+        {
+          text: 'Excluir',
+          cssClass: 'clear-button',
+          handler: async () => {
+            stations.isLoading = true;
+            const newStations = await dataService.removeStation(id);
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            stations.items = newStations;
+            stations.isLoading = false
+          },
+        },
+      ],
+    })
+    .then((alert) => alert.present());
 };
 
 onMounted(() => {
@@ -213,15 +243,8 @@ m3319 -31 c173 -520 176 -536 132 -629 -50 -109 -140 -155 -302 -155 l-91 0
               </div>
             </div>
 
-            <IonButton fill="clear" size="small" class="menu-btn">
-              <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
-                />
-              </svg>
+            <IonButton fill="clear" size="small" class="menu-btn" @click="openExcludeStation(station.id)">
+              <IonIcon :icon="trash"></IonIcon>
             </IonButton>
           </div>
 

@@ -350,6 +350,14 @@ ion-modal .container {
   overflow-x: auto;
 }
 
+.clear-button {
+    color: #fff!important;
+
+    &:hover {
+      background-color: transparent!important;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .input-wrapper {
     transition: none;
