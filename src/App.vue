@@ -59,7 +59,7 @@ provide('config', appConfig);
         <ion-router-outlet />
       </main>
 
-    <IonModal ref="configModal" class="max"  style="--height: min-height">
+    <IonModal ref="configModal" class="max big-width-form"  style="--height: min-height">
       <header>
         <span class="title">Configurações</span>
         <IonButtons slot="end">

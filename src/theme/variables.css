@@ -341,10 +341,7 @@ header {
   }
 }
 
-ion-modal.max {
-  --width: max-content;
-  --height: min-content;
-}
+
 
 ion-modal .container {
   overflow-x: auto;
@@ -356,6 +353,47 @@ ion-modal .container {
     &:hover {
       background-color: transparent!important;
     }
+}
+
+/* Todo ion-modal */
+ion-modal {
+  --safe-area-top: var(--app-safe-area-top, 0px);
+  --safe-area-right: var(--app-safe-area-right, 0px);
+  --safe-area-bottom: var(--app-safe-area-bottom, 0px);
+  --safe-area-left: var(--app-safe-area-left, 0px);
+  --height: min-content;
+}
+
+/* Conteúdo interno de todo modal */
+ion-modal ion-content {
+  --padding-top: var(--safe-area-top);
+  --padding-end: var(--safe-area-right);
+  --padding-bottom: var(--safe-area-bottom);
+  --padding-start: var(--safe-area-left);
+}
+
+/* Cabeçalho dentro do modal */
+ion-modal ion-header {
+  padding-top: var(--safe-area-top);
+}
+
+/* Rodapé dentro do modal */
+ion-modal ion-footer {
+  padding-bottom: var(--safe-area-bottom);
+}
+
+
+@media screen and (min-width: 1000px) {
+  ion-modal.max {
+    --width: max-content;
+    --height: min-content;
+    
+    &.big-width-form {
+      & input {
+        min-width: 400px;
+      }
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

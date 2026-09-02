@@ -11,7 +11,9 @@
     "build": "npm run build:front && npm run build:desktop",
     "build:front": "rm -rf dist && rm -rf electron/dist && npx ionic build && npx cap copy electron",
     "build:electron": "npx tsc -p electron",
-    "build:desktop": "npm run build:electron && cd electron && npm run electron:make -- --publish never"
+    "build:desktop": "npm run build:electron && cd electron && npm run electron:make -- --publish never",
+    "build:android:front": "rm -rf dist && npx ionic build && npx cap copy android",
+    "build:android": "npm run build:android:front && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
     "@capacitor-community/electron": "^5.0.1",

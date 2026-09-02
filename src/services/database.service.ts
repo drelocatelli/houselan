@@ -30,6 +30,7 @@ export interface Computer {
 export interface Station {
   id?: number;
   title: string;
+  finished: boolean
   status: 'free' | 'in_use' | 'maintenance';
   user?: string;
   time: number;

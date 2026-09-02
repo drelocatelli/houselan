@@ -147,11 +147,10 @@ const saveLogo = async () => {
         type="text"
         placeholder="Digite o nome do aplicativo"
         autocomplete="off"
-         style="min-width: 400px;"
       />
 
       <label for="price">Valor por hora</label>
-      <input type="number" v-model="form.pricePerHour" id="price" style="min-width: 400px;" />
+      <input type="number" v-model="form.pricePerHour" id="price" />
 
     </div>
 
