@@ -21,7 +21,9 @@ const stations = reactive({
 
 const finishedStations = computed(() => ({ items: stations.items.filter((station) => station.finished) }));
 
-const inUseStations = computed(() => ({ items: stations.items.filter((station) => !station.finished) }))
+const inUseStations = computed(() => ({
+  items: stations.items.filter((s) => !s.finished && s.time > 0),
+}));
 
 const initialForm = {
   title: '',
@@ -60,15 +62,16 @@ const newStation = async () => {
   try {
     stations.isLoading = true;
 
-    const newStation: Station = {
+    const stationCreated: Station = {
       title: form.title,
-      status: form.status as 'in_use' | 'free' | 'maintenance',
+      status: (Number(form.time) > 0 ? 'in_use' : 'free') as 'in_use' | 'free' | 'maintenance',
       user: form.user,
       time: form.time,
+      datetime: new Date().toISOString(),
       finished: false
     };
 
-    const allStations = await dataService.addNewStation(newStation);
+    const allStations = await dataService.addNewStation(stationCreated);
 
     stations.items = allStations;
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -86,17 +89,27 @@ const loadStations = async () => {
     stations.isLoading = true;
 
     stations.items = await dataService.getStations();
+    if(import.meta.env.DEV) {
+      stations.items = [
+          {
+          id: 0,
+          title: 'Teste',
+          status: 'free',
+          user: 'usuario',
+          time: 3700,
+          datetime: new Date().toISOString(),
+          finished: true,
+        },
+        ...stations.items
+      ]
+    }
+
     stations.items = [
-      {
-        id: 0,
-        title: 'Teste',
-        status: 'free',
-        user: '',
-        time: 0,
-        finished: true,
-      },
       ...stations.items
     ]
+
+    console.log(stations.items)
+
     await new Promise((resolve) => setTimeout(resolve, 1000));
   } catch (err) {
     console.error(err);
@@ -106,7 +119,7 @@ const loadStations = async () => {
 };
 
 const openExcludeStation = async (id: number) => {
-  if (!id) return;
+  if (id === undefined || id === null) return;
 
   await alertController
     .create({
@@ -134,10 +147,14 @@ const openExcludeStation = async (id: number) => {
     .then((alert) => alert.present());
 };
 
-const finishSession = (station: Station) => {
+const finishSession = async (station: Station) => {
   station.finished = true
-  station.time = 0;
+  
+  const allStations = await dataService.setFinishedStation(station.id);
+  
+  stations.items = allStations;
 };
+
 
 onMounted(() => {
   loadStations();

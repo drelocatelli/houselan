@@ -26,6 +26,21 @@ function openExcludeStation(stationId) {
 function finishSession(station) {
   emit('finish-session', station)
 }
+
+function formatTotalTime(seconds) {
+  const total = Number(seconds) || 0;
+
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+
+  if (h === 0) {
+    return m === 0 ? '—' : `${m} ${m === 1 ? 'min' : 'min'}`;
+  }
+
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} horas`;
+}
+
+
 </script>
 
 <template>
@@ -108,7 +123,7 @@ m3319 -31 c173 -520 176 -536 132 -629 -50 -109 -140 -155 -302 -155 l-91 0
               <IonIcon :icon="trash"></IonIcon>
             </IonButton>
           </div>
-
+          
           <!-- Status Badge + Tempo -->
           <div class="status-row" style="font-size: 12px; color: #fff; ">
             <div style="display: flex; flex-direction: column; gap: 6px; word-wrap: break-word; flex-wrap: wrap;">
@@ -119,14 +134,23 @@ m3319 -31 c173 -520 176 -536 132 -629 -50 -109 -140 -155 -302 -155 l-91 0
             </div>
             <TimeRemaining
               v-if="station.time > 0 && !station.finished"
-              :seconds="station.time"
+              :time="station.time"
+              :dateTime="station.datetime"
               @finished="finishSession(station)"
             />
-            <template v-else-if="station.finished">
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;" v-else-if="station.finished">
               <span class="session-timer session-timer--finished">
                 Sessão finalizada
               </span>
-            </template>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; color:#888; font-size: 10px; word-wrap: break-word; flex-wrap: wrap;">
+                <div>
+                  Data inicial: {{ new Date(station.datetime).toLocaleDateString('pt-BR') + " - " + new Date(station.datetime).toLocaleTimeString('pt-BR') }}
+                </div>
+                <div>
+                  Tempo total: {{ formatTotalTime(station.time) }}
+                </div>
+              </div>
+            </div>
           </div>
           
         </div>

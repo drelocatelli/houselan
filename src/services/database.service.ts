@@ -34,6 +34,7 @@ export interface Station {
   status: 'free' | 'in_use' | 'maintenance';
   user?: string;
   time: number;
+  datetime?: string;
 }
 
 export class AppDatabase extends Dexie {

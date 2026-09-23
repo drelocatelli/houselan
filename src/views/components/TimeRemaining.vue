@@ -1,37 +1,45 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps<{
-  seconds: number;
+  time: number;
+  dateTime: string;
 }>();
 
 const emit = defineEmits<{
   finished: [];
 }>();
 
-const remainingSeconds = ref(Math.max(0, Number(props.seconds) || 0));
+const now = ref(Date.now())
+let timer: ReturnType<typeof setInterval> | null = null
+let emitted = false
 
-let timer: ReturnType<typeof setInterval> | null = null;
+const startMs = computed(() => {
+  const t = new Date(props.dateTime).getTime()
+  return Number.isNaN(t) ? Date.now() : t
+})
+
+const durationMs = computed(() => Number(props.time || 0) * 1000)
+
+const endMs = computed(() => startMs.value + durationMs.value)
+
+const remainingSeconds = computed(() => Math.max(0, Math.ceil((endMs.value - now.value) / 1000)))
+
+const isFinished = computed(() => remainingSeconds.value <= 0)
 
 const formattedTime = computed(() => {
-  const totalSeconds = remainingSeconds.value;
+  const total = remainingSeconds.value;
 
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
 
-  if (hours > 0) {
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
-      2,
-      '0',
-    )}:${String(seconds).padStart(2, '0')}`;
-  }
+  const mm = String(minutes).padStart(2, '0');
+  const ss = String(seconds).padStart(2, '0');
 
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(
-    2,
-    '0',
-  )}`;
+  return hours > 0 ? `${String(hours).padStart(2, '0')}:${mm}:${ss}` : `${mm}:${ss}`;
 });
+
 
 const stopTimer = () => {
   if (timer) {
@@ -42,25 +50,27 @@ const stopTimer = () => {
 
 const finishSession = () => {
   stopTimer();
-  remainingSeconds.value = 0;
+  if(emitted) return
+  emitted = true
   emit('finished');
 };
 
-const startTimer = () => {
-  if (remainingSeconds.value <= 0) {
+const tick = () => {
+  now.value = Date.now();
+  if(remainingSeconds.value <= 0) {
     finishSession();
-    return;
   }
+}
 
-  timer = setInterval(() => {
-    if (remainingSeconds.value <= 1) {
-      finishSession();
-      return;
-    }
-
-    remainingSeconds.value -= 1;
-  }, 1000);
+const startTimer = () => {
+  stopTimer()
+  emitted = false
+  tick()
+  if(emitted) return
+  timer = setInterval(tick, 1000);
 };
+
+watch(() => [props.dateTime, props.time], startTimer);
 
 onMounted(() => {
   startTimer();
@@ -73,7 +83,7 @@ onUnmounted(() => {
 
 <template>
   <span
-    v-if="remainingSeconds > 0"
+    v-if="!isFinished"
     class="session-timer"
   >
     Termina em {{ formattedTime }}
