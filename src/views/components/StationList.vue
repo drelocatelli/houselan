@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IonButton, IonIcon } from '@ionic/vue'
-import { personAddOutline, trash } from 'ionicons/icons'
+import { pencil, personAddOutline, trash } from 'ionicons/icons'
 
 import { Station, StationStatus } from '@/services/database.service'
 import TimeRemaining from './TimeRemaining.vue'
@@ -16,8 +16,22 @@ const props = defineProps({
 const emit = defineEmits([
   'exclude-station',
   'finish-session',
-  'assignClient'
+  'assignClient',
+  'editStation'
 ])
+
+const getStationStatusLabel = (status: StationStatus) => {
+  switch (status) {
+    case StationStatus.Free:
+      return 'Livre'
+    case StationStatus.InUse:
+      return 'Ocupado'
+    case StationStatus.Maintenance:
+      return 'Manutenção'
+    default:
+      return ''
+  }
+}
 
 function openExcludeStation(stationId) {
   emit('exclude-station', stationId)
@@ -113,6 +127,7 @@ m3319 -31 c173 -520 176 -536 132 -629 -50 -109 -140 -155 -302 -155 l-91 0
                 </svg>
               </div>
               <div style="display: flex; flex-direction: column; gap: 8px">
+                <span v-if="station.status !== StationStatus.Free" style="font-size: 12px; color: #fff; ">{{ getStationStatusLabel(station.status) }}</span>
                 <span class="station-code">{{ station.title }}</span>
               </div>
             </div>
@@ -121,11 +136,15 @@ m3319 -31 c173 -520 176 -536 132 -629 -50 -109 -140 -155 -302 -155 l-91 0
               <IonButton v-if="station.status === StationStatus.Free && !station.client" fill="clear" size="small" class="menu-btn" @click="$emit('assignClient', station.id)">
                 <IonIcon :icon="personAddOutline"></IonIcon>
               </IonButton>
+              <IonButton  fill="clear" size="small" class="menu-btn" @click="$emit('editStation', station.id)">
+                <IonIcon :icon="pencil"></IonIcon>
+              </IonButton>
               <IonButton fill="clear" size="small" class="menu-btn" @click="openExcludeStation(station.id)">
                 <IonIcon :icon="trash"></IonIcon>
               </IonButton>
             </div>
           </div>
+
           
           <!-- Status Badge + Tempo -->
           <div class="status-row" style="font-size: 12px; color: #fff; ">

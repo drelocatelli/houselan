@@ -24,6 +24,8 @@ const finishedStations = computed(() => (stations.items.filter((station) => stat
 
 const inUseStations = computed(() => (stations.items.filter((s) => !s.client?.finished && s.client?.time > 0)));
 
+const stationMethod = ref<'create' | 'edit'>('create')
+
 const initialForm = readonly({
   title: '',
   status: 'free',
@@ -56,9 +58,22 @@ const resetForm = () => {
   Object.assign(form, initialForm);
 };
 
+const editStation = async(stationId: number) => {
+  const station = stations.items.find((station) => station.id === stationId);
+  if(station) {
+    form.title = station.title;
+    form.status = station.status;
+    form.time = station.client?.time || 0;
+    form.user = station.client?.user || '';
+    form.stationId = station.id;
+    stationMethod.value = 'edit'
+    addStationModal.value?.$el.present();
+  }
+}
+
 const newStation = async(e: Event) => {
-  const form = e.target as HTMLFormElement;
-  const payload = new FormData(form as any)
+  const formEl = e.target as HTMLFormElement;
+  const payload = new FormData(formEl as any)
   const title = payload.get('title') as string;
   const status = payload.get('status') as StationStatus;
 
@@ -73,12 +88,19 @@ const newStation = async(e: Event) => {
       status
     };
 
-    const allStations = await dataService.createStation(stationCreated);
-    stations.items = allStations;
+    if(stationMethod.value === 'create') {
+      const allStations = await dataService.createStation(stationCreated);
+      stations.items = allStations;
+    } else {
+      stationCreated.id = form.stationId
+      const allStations = await dataService.updateStation(stationCreated);
+      stations.items = allStations;
+    }
     
     await new Promise((resolve) => setTimeout(resolve, 1000));
     addStationModal.value?.$el.dismiss();
 
+    formEl.reset()
     resetForm()
     await toastController.create({
       message: 'Estação salva com sucesso!',
@@ -88,6 +110,8 @@ const newStation = async(e: Event) => {
     }).then((toast) => {
       toast.present()
     })
+
+    stationMethod.value = 'create'
     
   } catch(err) {
     alert('ocorreu um erro ao salvar a estação');
@@ -253,8 +277,8 @@ defineExpose({
             :stations="stations.items"
             @exclude-station="openExcludeStation"
             @finish-session="finishSession"
-            :can-assign-clients="true"
             @assign-client="openClientModal"
+            @edit-station="editStation"
           />
         </IonSegmentContent>
 
@@ -263,6 +287,7 @@ defineExpose({
             :stations="inUseStations"
             @exclude-station="openExcludeStation"
             @finish-session="finishSession"
+            @edit-station="editStation"
           />
         </IonSegmentContent>
 
@@ -271,6 +296,7 @@ defineExpose({
             :stations="finishedStations"
             @exclude-station="openExcludeStation"
             @finish-session="finishSession"
+            @edit-station="editStation"
           />
         </IonSegmentContent>
       </IonSegmentView>
@@ -338,7 +364,10 @@ defineExpose({
   </IonModal>
   <IonModal ref="addStationModal" class="max" :backdrop-dismiss="false">
     <header>
-      <span class="title">Nova estação</span>
+      <span class="title">
+        <template v-if="stationMethod === 'create'">Nova estação</template>
+        <template v-else>Editar estação</template>
+      </span>
       <IonButton
         fill="clear"
         style="color: #fff"
@@ -372,7 +401,8 @@ defineExpose({
             <IonSpinner name="dots" color="#fff"></IonSpinner>
           </template>
           <template v-else>
-            <span>Adicionar estação</span>
+            <template v-if="stationMethod === 'create'">Adicionar estação</template>
+            <template v-else>Salvar estação</template>
           </template>
         </button>
       </form>

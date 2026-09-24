@@ -78,6 +78,11 @@ export default class DataService {
     return await db.stations.toArray();
   }
 
+  async updateStation(data: Station) {
+    await db.stations.update(data.id, data);
+    return await db.stations.toArray();
+  }
+
   async assignClientToStation(data: ClientStation) {
     const station = await db.stations.where("id").equals(data.stationId).first()
     if(station) {
