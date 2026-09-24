@@ -410,7 +410,6 @@ defineExpose({
   </IonModal>
 </template>
 <style scoped>
-
 .container {
   margin: 0 auto;
   padding: 24px;
@@ -587,6 +586,11 @@ ion-modal input:disabled {
   cursor: not-allowed;
 }
 
+#tabs ion-segment {
+  display: flex;
+  flex-direction: row;
+}
+
 #tabs ion-segment-button {
   --indicator-color: #ffffff6e;
   --color: #888888;
@@ -594,9 +598,16 @@ ion-modal input:disabled {
   --color-checked: #bebebe;
 }
 
+@media (max-width: 768px) {
+  #tabs ion-segment {
+    flex-direction: column;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton {
     animation: none;
   }
 }
+
 </style>
