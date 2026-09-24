@@ -79,6 +79,7 @@ const newStation = async(e: Event) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     addStationModal.value?.$el.dismiss();
 
+    resetForm()
     await toastController.create({
       message: 'Estação salva com sucesso!',
       duration: 2000,
@@ -86,7 +87,6 @@ const newStation = async(e: Event) => {
       color: 'success',
     }).then((toast) => {
       toast.present()
-      form.reset()
     })
     
   } catch(err) {

@@ -2,7 +2,7 @@
 import { IonButton, IonIcon } from '@ionic/vue'
 import { personAddOutline, trash } from 'ionicons/icons'
 
-import { Station } from '@/services/database.service'
+import { Station, StationStatus } from '@/services/database.service'
 import TimeRemaining from './TimeRemaining.vue'
 
 const props = defineProps({
@@ -11,10 +11,6 @@ const props = defineProps({
     required: true,
     default: () => ([])
   },
-  canAssignClients: {
-    type: Boolean,
-    default: false
-  }
 })
 
 const emit = defineEmits([
@@ -122,7 +118,7 @@ m3319 -31 c173 -520 176 -536 132 -629 -50 -109 -140 -155 -302 -155 l-91 0
             </div>
 
             <div style="display: flex; gap: 10px">
-              <IonButton v-if="canAssignClients" fill="clear" size="small" class="menu-btn" @click="$emit('assignClient', station.id)">
+              <IonButton v-if="station.status === StationStatus.Free && !station.client" fill="clear" size="small" class="menu-btn" @click="$emit('assignClient', station.id)">
                 <IonIcon :icon="personAddOutline"></IonIcon>
               </IonButton>
               <IonButton fill="clear" size="small" class="menu-btn" @click="openExcludeStation(station.id)">
