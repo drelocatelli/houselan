@@ -29,9 +29,22 @@ export interface Computer {
 
 export interface Station {
   id?: number;
-  title: string;
+  title?: string;
+  status?: StationStatus;
+  client?: ClientStation;
+}
+
+export enum StationStatus {
+  Free = 'free',
+  InUse = 'in_use',
+  Maintenance = 'maintenance'
+}
+
+export interface ClientStation {
+  id?: number;
+  title?: string;
   finished: boolean
-  status: 'free' | 'in_use' | 'maintenance';
+  stationId?: string;
   user?: string;
   time: number;
   datetime?: string;

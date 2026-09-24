@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import DataService from '@/services/data.service.js';
-import { Station } from '@/services/database.service';
-import { alertController, IonButton, IonIcon, IonLabel, IonModal, IonSegment, IonSegmentButton, IonSegmentContent, IonSegmentView, IonSpinner } from '@ionic/vue';
+import { ClientStation, Station, StationStatus } from '@/services/database.service';
+import { alertController, IonButton, IonIcon, IonLabel, IonModal, IonSegment, IonSegmentButton, IonSegmentContent, IonSegmentView, IonSpinner, toastController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
-import { computed, inject, onMounted, reactive, ref } from 'vue';
+import { computed, inject, onMounted, reactive, readonly, ref } from 'vue';
 import StationList from './StationList.vue';
 import TimeInput from './TimeInput.vue';
 
@@ -11,6 +11,7 @@ const appConfig = inject('config');
 
 const dataService = new DataService();
 
+const addClientModal = ref();
 const addStationModal = ref();
 
 const stations = reactive({
@@ -19,21 +20,18 @@ const stations = reactive({
 });
 
 
-const finishedStations = computed(() => ({ items: stations.items.filter((station) => station.finished) }));
+const finishedStations = computed(() => (stations.items.filter((station) => station.client?.finished)));
 
-const inUseStations = computed(() => ({
-  items: stations.items.filter((s) => !s.finished && s.time > 0),
-}));
+const inUseStations = computed(() => (stations.items.filter((s) => !s.client?.finished && s.client?.time > 0)));
 
-const initialForm = {
+const initialForm = readonly({
   title: '',
   status: 'free',
   user: '',
   time: 0,
-};
-const form = reactive({
-  ...initialForm,
+  stationId: null
 });
+const form = reactive({...initialForm});
 
 const price = computed(() => {
   const totalSeconds = Number(form.time) || 0;
@@ -58,27 +56,80 @@ const resetForm = () => {
   Object.assign(form, initialForm);
 };
 
-const newStation = async () => {
+const newStation = async(e: Event) => {
+  const form = e.target as HTMLFormElement;
+  const payload = new FormData(form as any)
+  const title = payload.get('title') as string;
+  const status = payload.get('status') as StationStatus;
+
+  if(title === '' || title === undefined || title === null) return;
+  
+  // save station
   try {
     stations.isLoading = true;
 
     const stationCreated: Station = {
+      title,
+      status
+    };
+
+    const allStations = await dataService.createStation(stationCreated);
+    stations.items = allStations;
+    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    addStationModal.value?.$el.dismiss();
+
+    await toastController.create({
+      message: 'Estação salva com sucesso!',
+      duration: 2000,
+      position: 'bottom',
+      color: 'success',
+    }).then((toast) => {
+      toast.present()
+      form.reset()
+    })
+    
+  } catch(err) {
+    alert('ocorreu um erro ao salvar a estação');
+    console.error(err)
+  } finally {
+    stations.isLoading = false;
+  }
+}
+
+const newClient = async () => {
+  try {
+    stations.isLoading = true;
+    
+    const clientStationCreated: ClientStation = {
       title: form.title,
-      status: (Number(form.time) > 0 ? 'in_use' : 'free') as 'in_use' | 'free' | 'maintenance',
-      user: form.user,
+      stationId: form.stationId,
+      user: form?.user || 'Cliente',
       time: form.time,
       datetime: new Date().toISOString(),
       finished: false
     };
 
-    const allStations = await dataService.addNewStation(stationCreated);
+    if(Number(form.time) <= 0) {
+      await toastController.create({
+        message: 'Por favor, insira um tempo de uso válido',
+        duration: 2000,
+        position: 'bottom',
+        color: 'danger',
+      }).then((toast) => {
+        toast.present()
+      })
+      return
+    }
+    
+    const allStations = await dataService.assignClientToStation(clientStationCreated);
 
     stations.items = allStations;
+    resetForm()
     await new Promise((resolve) => setTimeout(resolve, 1000));
   } catch (err) {
     console.error(err);
   } finally {
-    resetForm();
     addStationModal.value?.$el.dismiss();
     stations.isLoading = false;
   }
@@ -89,26 +140,6 @@ const loadStations = async () => {
     stations.isLoading = true;
 
     stations.items = await dataService.getStations();
-    if(import.meta.env.DEV) {
-      stations.items = [
-          {
-          id: 0,
-          title: 'Teste',
-          status: 'free',
-          user: 'usuario',
-          time: 3700,
-          datetime: new Date().toISOString(),
-          finished: true,
-        },
-        ...stations.items
-      ]
-    }
-
-    stations.items = [
-      ...stations.items
-    ]
-
-    console.log(stations.items)
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
   } catch (err) {
@@ -148,12 +179,17 @@ const openExcludeStation = async (id: number) => {
 };
 
 const finishSession = async (station: Station) => {
-  station.finished = true
-  
-  const allStations = await dataService.setFinishedStation(station.id);
+  const allStations = await dataService.setFinishedClientStation(station.id);
   
   stations.items = allStations;
 };
+
+const openClientModal = async(stationId: number) => {
+  if(stationId == undefined || stationId == null) return;
+
+  form.stationId = stationId
+  await addClientModal.value?.$el.present()
+}
 
 
 onMounted(() => {
@@ -214,9 +250,11 @@ defineExpose({
       <IonSegmentView style="margin: 1rem 0;">
         <IonSegmentContent id="all">
           <StationList
-            :stations="stations"
+            :stations="stations.items"
             @exclude-station="openExcludeStation"
             @finish-session="finishSession"
+            :can-assign-clients="true"
+            @assign-client="openClientModal"
           />
         </IonSegmentContent>
 
@@ -239,17 +277,15 @@ defineExpose({
     </div>
 
   </div>
-  <IonModal ref="addStationModal" class="max" :backdrop-dismiss="false">
+  <IonModal ref="addClientModal" class="max" :backdrop-dismiss="false">
     <header>
-      <span class="title">Nova estação</span>
+      <span class="title">Novo cliente</span>
       <IonButton
         fill="clear"
         style="color: #fff"
         size="small"
         slot="start"
-        @click="
-          resetForm();
-          addStationModal.$el.dismiss();
+        @click="addClientModal.$el.dismiss();
         "
       >
         <IonIcon :icon="close" style="color: #fff"></IonIcon>
@@ -257,18 +293,15 @@ defineExpose({
     </header>
     <div class="container" style="margin: 0">
       <div style="display: flex; align-items: center; gap: 1rem">
-        <form method="post" style="display: flex; flex-direction: column; gap: 10px" @submit.prevent="newStation">
+        <form method="post" style="display: flex; flex-direction: column; gap: 10px" @submit.prevent="newClient">
           <div>
             <label for="user">Nome do cliente (opcional)</label>
             <input type="text" name="user" id="user" v-model="form.user" />
           </div>
 
-          <div>
-            <label for="name">Título da estação</label>
-            <input type="text" name="name" id="name" v-model="form.title" required />
-          </div>
+          <input type="text" name="name" id="name" v-model="form.title" hidden />
 
-            <input type="text" v-model="form.status" hidden />
+          <input type="text" v-model="form.status" hidden />
           <div>
             <label for="time">Horas de uso</label>
             <TimeInput :initial-seconds="form.time || 0" :running="form.status === 'in_use'" @update:seconds="form.time = $event" />
@@ -301,6 +334,48 @@ defineExpose({
           </div>
         </form>
       </div>
+    </div>
+  </IonModal>
+  <IonModal ref="addStationModal" class="max" :backdrop-dismiss="false">
+    <header>
+      <span class="title">Nova estação</span>
+      <IonButton
+        fill="clear"
+        style="color: #fff"
+        size="small"
+        slot="start"
+        @click="
+          addStationModal.$el.dismiss();
+        "
+      >
+        <IonIcon :icon="close" style="color: #fff"></IonIcon>
+      </IonButton>
+    </header>
+    <div class="container">
+      <form method="post" @submit.prevent="newStation" style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+        <div>
+          <label for="title">Título da estação</label>
+          <input type="text" name="title" id="title" v-model="form.title" required />
+        </div>
+
+        <div>
+          <label for="status">Status</label>
+          <select name="status" id="status" v-model="form.status">
+            <option value="free">Livre</option>
+            <option value="in_use">Ocupada</option>
+            <option value="maintenance">Manutenção</option>
+          </select>
+        </div>
+
+        <button type="submit" class="light" :disabled="stations.isLoading" style="align-self: flex-end;">
+          <template v-if="stations.isLoading">
+            <IonSpinner name="dots" color="#fff"></IonSpinner>
+          </template>
+          <template v-else>
+            <span>Adicionar estação</span>
+          </template>
+        </button>
+      </form>
     </div>
   </IonModal>
 </template>

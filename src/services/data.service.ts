@@ -1,6 +1,6 @@
 import { fileToDataURL } from '@/utis/file';
 import { formatBRL, formatClock, isToday, toNumber } from '@/utis/helpers';
-import { db, Station } from './database.service';
+import { ClientStation, db, Station } from './database.service';
 
 export default class DataService {
   data: {
@@ -73,8 +73,16 @@ export default class DataService {
     return await db.stations.toArray();
   }
 
-  async addNewStation(data: Station) {
+  async createStation(data: Station) {
     await db.stations.add(data);
+    return await db.stations.toArray();
+  }
+
+  async assignClientToStation(data: ClientStation) {
+    const station = await db.stations.where("id").equals(data.stationId).first()
+    if(station) {
+      await db.stations.update(station.id, { ...station, client: data })
+    }
     return await db.stations.toArray();
   }
 
@@ -83,9 +91,20 @@ export default class DataService {
     return await db.stations.toArray();
   }
 
-  async setFinishedStation(id: number) {
-    await db.stations.update(id, { finished: true });
+  async setFinishedClientStation(id: number) {
+    const station = await db.stations.where("id").equals(id).first()
+
+    if(station) {
+      station.client.finished = true
+      await db.stations.update(id, station)
+    }
     return await db.stations.toArray();
+  }
+
+  async getStationsWithClient() {
+    const stations = await this.getStations()
+
+    return stations
   }
 
   async getAnalytics() {
@@ -93,10 +112,10 @@ export default class DataService {
 
     const pricePerHour = toNumber(this.data.config.pricePerHour);
 
-    const sessions = (stations || []).filter((s) => (Number(s.time) || 0) > 0);
+    const sessions = (stations || []).filter((s) => (Number(s.client?.time) || 0) > 0);
 
-    const totalSeconds = sessions.reduce((acc, s) => acc + (Number(s.time) || 0), 0);
-    const secondsToday = sessions.filter((s) => isToday(s.datetime)).reduce((acc, s) => acc + (Number(s.time) || 0), 0);
+    const totalSeconds = sessions.reduce((acc, s) => acc + (Number(s.client?.time) || 0), 0);
+    const secondsToday = sessions.filter((s) => isToday(s.client?.datetime)).reduce((acc, s) => acc + (Number(s.client?.time) || 0), 0);
 
     const hoursTotal = totalSeconds / 3600;
     const hoursToday = secondsToday / 3600;

@@ -1,22 +1,26 @@
-<script setup>
+<script setup lang="ts">
 import { IonButton, IonIcon } from '@ionic/vue'
-import { trash } from 'ionicons/icons'
+import { personAddOutline, trash } from 'ionicons/icons'
 
+import { Station } from '@/services/database.service'
 import TimeRemaining from './TimeRemaining.vue'
 
 const props = defineProps({
   stations: {
-    type: Object,
+    type: Array as () => (Station[]),
     required: true,
-    default: () => ({
-      items: []
-    })
+    default: () => ([])
+  },
+  canAssignClients: {
+    type: Boolean,
+    default: false
   }
 })
 
 const emit = defineEmits([
   'exclude-station',
-  'finish-session'
+  'finish-session',
+  'assignClient'
 ])
 
 function openExcludeStation(stationId) {
@@ -39,13 +43,11 @@ function formatTotalTime(seconds) {
 
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} horas`;
 }
-
-
 </script>
 
 <template>
     <div class="grid">
-      <div v-for="station in props.stations.items" :key="station.id" class="card" :style="{ opacity: (station.time > 0 && !station.finished) ? 1 : .5 }">
+      <div v-for="station in props.stations" :key="station.id" class="card" :style="{ opacity: (station.client?.time > 0 && !station.client?.finished) ? 1 : .5 }">
         <!-- Topo do Card -->
         <div>
           <div class="card-header">
@@ -119,35 +121,40 @@ m3319 -31 c173 -520 176 -536 132 -629 -50 -109 -140 -155 -302 -155 l-91 0
               </div>
             </div>
 
-            <IonButton fill="clear" size="small" class="menu-btn" @click="openExcludeStation(station.id)">
-              <IonIcon :icon="trash"></IonIcon>
-            </IonButton>
+            <div style="display: flex; gap: 10px">
+              <IonButton v-if="canAssignClients" fill="clear" size="small" class="menu-btn" @click="$emit('assignClient', station.id)">
+                <IonIcon :icon="personAddOutline"></IonIcon>
+              </IonButton>
+              <IonButton fill="clear" size="small" class="menu-btn" @click="openExcludeStation(station.id)">
+                <IonIcon :icon="trash"></IonIcon>
+              </IonButton>
+            </div>
           </div>
           
           <!-- Status Badge + Tempo -->
           <div class="status-row" style="font-size: 12px; color: #fff; ">
             <div style="display: flex; flex-direction: column; gap: 6px; word-wrap: break-word; flex-wrap: wrap;">
-              <span v-show="station.user">Nome: </span>
+              <span v-show="station.client?.user">Nome: </span>
               <span style="color:#888">
-                 {{ station.user }}
+                 {{ station.client?.user }}
               </span>
             </div>
             <TimeRemaining
-              v-if="station.time > 0 && !station.finished"
-              :time="station.time"
-              :dateTime="station.datetime"
+              v-if="station.client?.time > 0 && !station.client?.finished"
+              :time="station.client?.time"
+              :dateTime="station.client?.datetime"
               @finished="finishSession(station)"
             />
-            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;" v-else-if="station.finished">
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;" v-else-if="station.client?.finished">
               <span class="session-timer session-timer--finished">
                 Sessão finalizada
               </span>
               <div style="display: flex; flex-direction: column; align-items: flex-end; color:#888; font-size: 10px; word-wrap: break-word; flex-wrap: wrap;">
                 <div>
-                  Data inicial: {{ new Date(station.datetime).toLocaleDateString('pt-BR') + " - " + new Date(station.datetime).toLocaleTimeString('pt-BR') }}
+                  Data inicial: {{ new Date(station.client?.datetime).toLocaleDateString('pt-BR') + " - " + new Date(station.client?.datetime).toLocaleTimeString('pt-BR') }}
                 </div>
                 <div>
-                  Tempo total: {{ formatTotalTime(station.time) }}
+                  Tempo total: {{ formatTotalTime(station.client?.time) }}
                 </div>
               </div>
             </div>
