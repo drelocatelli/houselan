@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useAnalytics } from '@/composables/useAnalytics.js';
 import DataService from '@/services/data.service.js';
 import { ClientStation, Station, StationStatus } from '@/services/database.service';
 import {
@@ -16,7 +17,6 @@ import {
 } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { computed, inject, onMounted, reactive, readonly, ref } from 'vue';
-import { useAnalytics } from '@/composables/useAnalytics.js';
 import FilterStations from './FilterStations.vue';
 import StationList from './StationList.vue';
 import TimeInput from './TimeInput.vue';
@@ -151,7 +151,7 @@ const newStation = async (e: Event) => {
       stations.items = allStations;
     }
 
-    await dataService.refreshAnalytics()
+    await dataService.refreshAnalytics();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
     addStationModal.value?.$el.dismiss();
@@ -225,7 +225,7 @@ const loadStations = async () => {
     stations.isLoading = true;
 
     stations.items = await dataService.getStations();
-    await dataService.refreshAnalytics()
+    await dataService.refreshAnalytics();
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
   } catch (err) {
@@ -279,6 +279,69 @@ const openClientModal = async (stationId: number) => {
   await addClientModal.value?.$el.present();
 };
 
+const freeStation = async (stationId: number) => {
+  try {
+    const targetStation = stations.items.find((s) => s.id === stationId);
+    let usedSeconds = 0;
+    let message = 'Deseja descontar o valor em que o cliente está consumindo?';
+
+    if (targetStation?.client?.datetime) {
+      const startMs = new Date(targetStation.client.datetime).getTime();
+      if (!Number.isNaN(startMs)) {
+        const elapsed = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+        usedSeconds = Math.min(targetStation.client.time || 0, elapsed);
+        const minutesUsed = Math.ceil(usedSeconds / 60);
+        const totalMinutes = Math.round((targetStation.client.time || 0) / 60);
+        message = `O cliente utilizou aproximadamente ${minutesUsed} min de ${totalMinutes} min contratados. Deseja aplicar o desconto e cobrar apenas pelo tempo utilizado?`;
+      }
+    }
+
+    await alertController
+      .create({
+        header: 'Aplicar desconto?',
+        message,
+        buttons: [
+          {
+            text: 'Aplicar desconto',
+            cssClass: 'clear-button',
+            handler: async () => {
+              stations.isLoading = true;
+              const newStations = await dataService.removeClientFromStation(stationId, usedSeconds);
+              stations.items = newStations;
+              await dataService.refreshAnalytics();
+              await loadAnalytics();
+              stations.isLoading = false;
+            },
+          },
+          {
+            text: 'Liberar sem desconto',
+            cssClass: 'clear-button',
+            handler: async () => {
+              stations.isLoading = true;
+              const newStations = await dataService.removeClientFromStation(stationId);
+              stations.items = newStations;
+              await dataService.refreshAnalytics();
+              await loadAnalytics();
+              stations.isLoading = false;
+            },
+          },
+        ],
+      })
+      .then((alert) => alert.present());
+  } catch (err) {
+    console.error(err);
+    await toastController
+      .create({
+        message: 'Ocorreu um erro ao liberar a estação',
+        duration: 2000,
+        position: 'bottom',
+        color: 'danger',
+      })
+      .then((toast) => toast.present());
+    stations.isLoading = false;
+  }
+};
+
 const makeStationFree = async (stationId: number) => {
   if (stationId === undefined || stationId === null) return;
 
@@ -296,13 +359,7 @@ const makeStationFree = async (stationId: number) => {
           text: 'Liberar',
           cssClass: 'clear-button',
           handler: async () => {
-            stations.isLoading = true;
-            const newStations = await dataService.removeClientFromStation(stationId);
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            stations.items = newStations;
-            await dataService.refreshAnalytics();
-            await loadAnalytics();
-            stations.isLoading = false;
+            await freeStation(stationId);
           },
         },
       ],

@@ -109,14 +109,17 @@ export default class DataService {
     return await db.stations.toArray();
   }
 
-  async removeClientFromStation(id: number) {
+  async removeClientFromStation(id: number, timeOverride?: number) {
     const station = await db.stations.where("id").equals(id).first();
     
     if(station) {
       if (station.client) {
         station.client.finished = true;
+        if (typeof timeOverride === 'number' && timeOverride >= 0) {
+          station.client.time = timeOverride;
+        }
         if (station.client.id) {
-          await db.sessions.update(station.client.id, { finished: true });
+          await db.sessions.update(station.client.id, { finished: true, time: station.client.time });
         } else {
           await db.sessions.add(station.client);
         }
