@@ -16,10 +16,12 @@ import {
 } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { computed, inject, onMounted, reactive, readonly, ref } from 'vue';
+import { useAnalytics } from '@/composables/useAnalytics.js';
 import FilterStations from './FilterStations.vue';
 import StationList from './StationList.vue';
 import TimeInput from './TimeInput.vue';
 
+const { loadAnalytics } = useAnalytics();
 const appConfig = inject('config');
 
 const dataService = new DataService();
@@ -149,6 +151,8 @@ const newStation = async (e: Event) => {
       stations.items = allStations;
     }
 
+    await dataService.refreshAnalytics()
+
     await new Promise((resolve) => setTimeout(resolve, 1000));
     addStationModal.value?.$el.dismiss();
 
@@ -204,6 +208,8 @@ const newClient = async () => {
     const allStations = await dataService.assignClientToStation(clientStationCreated);
 
     stations.items = allStations;
+    await dataService.refreshAnalytics();
+    await loadAnalytics();
     resetForm();
     addClientModal.value?.$el.dismiss();
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -219,6 +225,7 @@ const loadStations = async () => {
     stations.isLoading = true;
 
     stations.items = await dataService.getStations();
+    await dataService.refreshAnalytics()
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
   } catch (err) {
@@ -261,6 +268,8 @@ const finishSession = async (station: Station) => {
   const allStations = await dataService.setFinishedClientStation(station.id);
 
   stations.items = allStations;
+  await dataService.refreshAnalytics();
+  await loadAnalytics();
 };
 
 const openClientModal = async (stationId: number) => {
@@ -291,6 +300,8 @@ const makeStationFree = async (stationId: number) => {
             const newStations = await dataService.removeClientFromStation(stationId);
             await new Promise((resolve) => setTimeout(resolve, 1000));
             stations.items = newStations;
+            await dataService.refreshAnalytics();
+            await loadAnalytics();
             stations.isLoading = false;
           },
         },

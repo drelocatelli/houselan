@@ -1,48 +1,36 @@
-function toNumber(value: any) {
-    if (typeof value === 'number') return value
-    if (!value) return 0
 
-    const clean = String(value)
-        .replace(/[^\d,.-]/g, '')   // tira "R$" e espaços
-        .replace(/\./g, '')         // milhar "1.234,56"
-        .replace(',', '.')          // decimal pt-BR
+const toNumber = (value: unknown): number => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+};
 
-    const n = Number(clean)
-    return Number.isNaN(n) ? 0 : n
-}
+const dayKey = (date = new Date()): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
 
-function isToday(dateValue: any) {
-    const d = new Date(dateValue)
-    if (Number.isNaN(d.getTime())) return false
+const isToday = (iso?: string): boolean => {
+  if (!iso) return false;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return false;
+  return dayKey(date) === dayKey();
+};
 
-    const now = new Date()
-    return (
-        d.getFullYear() === now.getFullYear() &&
-        d.getMonth() === now.getMonth() &&
-        d.getDate() === now.getDate()
-    )
-}
+const formatClock = (totalSeconds: number): string => {
+  const total = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+};
 
-function formatBRL(value: any) {
-    return (Number(value) || 0).toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    })
-}
+const formatBRL = (value: number): string =>
+  new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
 
-function formatClock(seconds: any) {
-    const total = Math.max(0, Math.round(Number(seconds) || 0))
 
-    const h = Math.floor(total / 3600)
-    const m = Math.floor((total % 3600) / 60)
-    const s = total % 60
-
-    const pad = (n) => String(n).padStart(2, '0')
-
-    return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`
-}
-
-export {
-    formatBRL, formatClock, isToday, toNumber
-}
+export { dayKey, formatBRL, formatClock, isToday, toNumber };
 

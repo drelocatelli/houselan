@@ -138,6 +138,7 @@ const saveSettings = async () => {
       const result = await db.config.update(config.key, {
         key: 0,
         appName: form.appName,
+        pricePerHour: 0
       });
 
       console.log({ result });
@@ -145,6 +146,7 @@ const saveSettings = async () => {
       await db.config.add({
         key: 0,
         appName: form.appName,
+        pricePerHour: 0
       });
     }
 

@@ -1,6 +1,5 @@
 import { fileToDataURL } from '@/utis/file';
-import { formatBRL, formatClock, isToday, toNumber } from '@/utis/helpers';
-import { ClientStation, db, Station, StationStatus } from './database.service';
+import { Analytics, ClientStation, db, Station, StationStatus } from './database.service';
 
 export default class DataService {
   data: {
@@ -84,37 +83,63 @@ export default class DataService {
   }
 
   async assignClientToStation(data: ClientStation) {
-    const station = await db.stations.where("id").equals(data.stationId).first()
-    station.status = StationStatus.InUse
+    const station = await db.stations.where("id").equals(data.stationId).first();
     if(station) {
-      await db.stations.update(station.id, { ...station, client: data })
+      const sessionId = await db.sessions.add(data);
+      const clientWithId = { ...data, id: sessionId };
+      station.status = StationStatus.InUse;
+      station.client = clientWithId;
+      await db.stations.update(station.id, station);
     }
+    await this.refreshAnalytics();
     return await db.stations.toArray();
   }
 
   async removeStation(id: number) {
+    const station = await db.stations.where("id").equals(id).first();
+    if (station?.client) {
+      if (station.client.id) {
+        await db.sessions.update(station.client.id, { finished: true });
+      } else {
+        await db.sessions.add({ ...station.client, finished: true });
+      }
+    }
     await db.stations.delete(id);
+    await this.refreshAnalytics();
     return await db.stations.toArray();
   }
 
   async removeClientFromStation(id: number) {
-    const station = await db.stations.where("id").equals(id).first()
+    const station = await db.stations.where("id").equals(id).first();
     
     if(station) {
-      station.client = null
-      station.status = StationStatus.Free
-      await db.stations.update(id, station)
+      if (station.client) {
+        station.client.finished = true;
+        if (station.client.id) {
+          await db.sessions.update(station.client.id, { finished: true });
+        } else {
+          await db.sessions.add(station.client);
+        }
+      }
+      station.client = null;
+      station.status = StationStatus.Free;
+      await db.stations.update(id, station);
     }
+    await this.refreshAnalytics();
     return await db.stations.toArray();
   }
 
   async setFinishedClientStation(id: number) {
-    const station = await db.stations.where("id").equals(id).first()
+    const station = await db.stations.where("id").equals(id).first();
 
-    if(station) {
-      station.client.finished = true
-      await db.stations.update(id, station)
+    if(station && station.client) {
+      station.client.finished = true;
+      await db.stations.update(id, station);
+      if (station.client.id) {
+        await db.sessions.update(station.client.id, { finished: true });
+      }
     }
+    await this.refreshAnalytics();
     return await db.stations.toArray();
   }
 
@@ -124,37 +149,46 @@ export default class DataService {
     return stations
   }
 
-  async getAnalytics() {
-    const stations = await this.getStations();
-
-    const pricePerHour = toNumber(this.data.config.pricePerHour);
-
-    const sessions = (stations || []).filter((s) => (Number(s.client?.time) || 0) > 0);
-
-    const totalSeconds = sessions.reduce((acc, s) => acc + (Number(s.client?.time) || 0), 0);
-    const secondsToday = sessions.filter((s) => isToday(s.client?.datetime)).reduce((acc, s) => acc + (Number(s.client?.time) || 0), 0);
-
-    const hoursTotal = totalSeconds / 3600;
-    const hoursToday = secondsToday / 3600;
-
-    return {
-      // horas em decimal (arredondado, sem 0.0833333333)
-      hoursTotal: Number(hoursTotal.toFixed(4)),
-      hoursToday: Number(hoursToday.toFixed(4)),
-
-      // minutos — o mais fácil de ler para sessões curtas
-      minutesTotal: Math.round(totalSeconds / 60),
-      minutesToday: Math.round(secondsToday / 60),
-
-      // formato de relógio 00:05
-      hoursTotalLabel: formatClock(totalSeconds), // "00:05"
-      hoursTodayLabel: formatClock(secondsToday),
-
-      financeTotal: Number((hoursTotal * pricePerHour).toFixed(2)),
-      financeToday: Number((hoursToday * pricePerHour).toFixed(2)),
-
-      financeTotalLabel: formatBRL(hoursTotal * pricePerHour), // "R$ 0,08"
-      financeTodayLabel: formatBRL(hoursToday * pricePerHour),
-    };
+  async getAnalytics(): Promise<Analytics> {
+    const analytics = await db.getAnalytics()
+    return analytics;
   }
+
+  async refreshAnalytics(): Promise<Analytics> {
+    return db.refreshAnalytics();
+  }
+
+  // async getAnalytics() {
+  //   const stations = await this.getStations();
+
+  //   const pricePerHour = toNumber(this.data.config.pricePerHour);
+
+  //   const sessions = (stations || []).filter((s) => (Number(s.client?.time) || 0) > 0);
+
+  //   const totalSeconds = sessions.reduce((acc, s) => acc + (Number(s.client?.time) || 0), 0);
+  //   const secondsToday = sessions.filter((s) => isToday(s.client?.datetime)).reduce((acc, s) => acc + (Number(s.client?.time) || 0), 0);
+
+  //   const hoursTotal = totalSeconds / 3600;
+  //   const hoursToday = secondsToday / 3600;
+
+  //   return {
+  //     // horas em decimal (arredondado, sem 0.0833333333)
+  //     hoursTotal: Number(hoursTotal.toFixed(4)),
+  //     hoursToday: Number(hoursToday.toFixed(4)),
+
+  //     // minutos — o mais fácil de ler para sessões curtas
+  //     minutesTotal: Math.round(totalSeconds / 60),
+  //     minutesToday: Math.round(secondsToday / 60),
+
+  //     // formato de relógio 00:05
+  //     hoursTotalLabel: formatClock(totalSeconds), // "00:05"
+  //     hoursTodayLabel: formatClock(secondsToday),
+
+  //     financeTotal: Number((hoursTotal * pricePerHour).toFixed(2)),
+  //     financeToday: Number((hoursToday * pricePerHour).toFixed(2)),
+
+  //     financeTotalLabel: formatBRL(hoursTotal * pricePerHour), // "R$ 0,08"
+  //     financeTodayLabel: formatBRL(hoursToday * pricePerHour),
+  //   };
+  // }
 }

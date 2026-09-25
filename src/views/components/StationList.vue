@@ -57,8 +57,9 @@ function formatTotalTime(seconds) {
 </script>
 
 <template>
-    <div class="grid">
-      <div v-for="station in props.stations" :key="station.id" class="card" :style="{ opacity: (station.client?.time > 0 && !station.client?.finished) ? 1 : .5 }">
+  <div v-if="props.stations?.length === 0" style="font-size: 14px; text-align: center; color: #888; padding: 2rem 0;">Nenhuma estação encontrada.</div>
+  <div class="grid" v-else>
+    <div v-for="station in props.stations" :key="station.id" class="card" :style="{ opacity: (station.client?.time > 0 && !station.client?.finished) ? 1 : .5 }">
         <!-- Topo do Card -->
         <div>
           <div class="card-header">
