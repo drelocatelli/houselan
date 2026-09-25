@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IonButton, IonIcon } from '@ionic/vue'
-import { pencil, personAddOutline, trash } from 'ionicons/icons'
+import { checkmarkDone, pencil, personAddOutline, trash } from 'ionicons/icons'
 
 import { Station, StationStatus } from '@/services/database.service'
 import TimeRemaining from './TimeRemaining.vue'
@@ -17,7 +17,8 @@ const emit = defineEmits([
   'exclude-station',
   'finish-session',
   'assignClient',
-  'editStation'
+  'editStation',
+  'makeStationFree'
 ])
 
 const getStationStatusLabel = (status: StationStatus) => {
@@ -133,13 +134,16 @@ m3319 -31 c173 -520 176 -536 132 -629 -50 -109 -140 -155 -302 -155 l-91 0
             </div>
 
             <div style="display: flex; gap: 10px">
-              <IonButton v-if="station.status === StationStatus.Free && !station.client" fill="clear" size="small" class="menu-btn" @click="$emit('assignClient', station.id)">
+              <IonButton v-if="station.status === StationStatus.Free && !station.client" fill="clear" size="small" class="menu-btn" @click="$emit('assignClient', station.id)" title="Adicionar cliente">
                 <IonIcon :icon="personAddOutline"></IonIcon>
               </IonButton>
-              <IonButton  fill="clear" size="small" class="menu-btn" @click="$emit('editStation', station.id)">
+              <IonButton v-if="!station.client?.finished && station.status === StationStatus.Free"  fill="clear" size="small" class="menu-btn" @click="$emit('editStation', station.id)" title="Editar estação">
                 <IonIcon :icon="pencil"></IonIcon>
               </IonButton>
-              <IonButton fill="clear" size="small" class="menu-btn" @click="openExcludeStation(station.id)">
+              <IonButton @click="$emit('makeStationFree', station.id)" fill="clear" size="small" class="menu-btn" v-if="station.client?.finished || station.status === StationStatus.InUse" title="Liberar estação">
+                <IonIcon :icon="checkmarkDone"></IonIcon>
+              </IonButton>
+              <IonButton fill="clear" size="small" class="menu-btn" @click="openExcludeStation(station.id)" title="Excluir estação">
                 <IonIcon :icon="trash"></IonIcon>
               </IonButton>
             </div>

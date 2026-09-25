@@ -1,11 +1,24 @@
 <script setup lang="ts">
 import DataService from '@/services/data.service.js';
 import { ClientStation, Station, StationStatus } from '@/services/database.service';
-import { alertController, IonButton, IonIcon, IonLabel, IonModal, IonSegment, IonSegmentButton, IonSegmentContent, IonSegmentView, IonSpinner, toastController } from '@ionic/vue';
+import {
+  alertController,
+  IonButton,
+  IonIcon,
+  IonLabel,
+  IonModal,
+  IonSegment,
+  IonSegmentButton,
+  IonSegmentContent,
+  IonSegmentView,
+  IonSpinner,
+  toastController,
+} from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { computed, inject, onMounted, reactive, readonly, ref } from 'vue';
 import StationList from './StationList.vue';
 import TimeInput from './TimeInput.vue';
+import FilterStations from './FilterStations.vue';
 
 const appConfig = inject('config');
 
@@ -19,21 +32,58 @@ const stations = reactive({
   items: [] as Station[],
 });
 
+const searchStation = ref('');
+const searchClient = ref('');
+const filterStatus = ref('all');
 
-const finishedStations = computed(() => (stations.items.filter((station) => station.client?.finished)));
+const clearFilters = () => {
+  searchStation.value = '';
+  searchClient.value = '';
+  filterStatus.value = 'all';
+};
 
-const inUseStations = computed(() => (stations.items.filter((s) => !s.client?.finished && s.client?.time > 0)));
+const filteredStations = computed(() => {
+  return stations.items.filter((station) => {
+    // 1. Filter by station title
+    if (searchStation.value.trim() !== '') {
+      const title = station.title?.toLowerCase() || '';
+      if (!title.includes(searchStation.value.trim().toLowerCase())) {
+        return false;
+      }
+    }
 
-const stationMethod = ref<'create' | 'edit'>('create')
+    // 2. Filter by client / user name
+    if (searchClient.value.trim() !== '') {
+      const userName = station.client?.user?.toLowerCase() || '';
+      if (!userName.includes(searchClient.value.trim().toLowerCase())) {
+        return false;
+      }
+    }
+
+    // 3. Filter by station status
+    if (filterStatus.value !== 'all') {
+      if (station.status !== filterStatus.value) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+});
+
+const finishedStations = computed(() => filteredStations.value.filter((station) => station.client?.finished));
+const inUseStations = computed(() => filteredStations.value.filter((s) => !s.client?.finished && s.client?.time > 0));
+const freeStations = computed(() => filteredStations.value.filter((station) => station.status === StationStatus.Free && !station.client));
+const stationMethod = ref<'create' | 'edit'>('create');
 
 const initialForm = readonly({
   title: '',
   status: 'free',
   user: '',
   time: 0,
-  stationId: null
+  stationId: null,
 });
-const form = reactive({...initialForm});
+const form = reactive({ ...initialForm });
 
 const price = computed(() => {
   const totalSeconds = Number(form.time) || 0;
@@ -58,103 +108,106 @@ const resetForm = () => {
   Object.assign(form, initialForm);
 };
 
-const editStation = async(stationId: number) => {
+const editStation = async (stationId: number) => {
   const station = stations.items.find((station) => station.id === stationId);
-  if(station) {
+  if (station) {
     form.title = station.title;
     form.status = station.status;
     form.time = station.client?.time || 0;
     form.user = station.client?.user || '';
     form.stationId = station.id;
-    stationMethod.value = 'edit'
+    stationMethod.value = 'edit';
     addStationModal.value?.$el.present();
   }
-}
+};
 
-const newStation = async(e: Event) => {
+const newStation = async (e: Event) => {
   const formEl = e.target as HTMLFormElement;
-  const payload = new FormData(formEl as any)
+  const payload = new FormData(formEl as any);
   const title = payload.get('title') as string;
   const status = payload.get('status') as StationStatus;
 
-  if(title === '' || title === undefined || title === null) return;
-  
+  if (title === '' || title === undefined || title === null) return;
+
   // save station
   try {
     stations.isLoading = true;
 
     const stationCreated: Station = {
       title,
-      status
+      status,
     };
 
-    if(stationMethod.value === 'create') {
+    if (stationMethod.value === 'create') {
       const allStations = await dataService.createStation(stationCreated);
       stations.items = allStations;
     } else {
-      stationCreated.id = form.stationId
+      stationCreated.id = form.stationId;
       const allStations = await dataService.updateStation(stationCreated);
       stations.items = allStations;
     }
-    
+
     await new Promise((resolve) => setTimeout(resolve, 1000));
     addStationModal.value?.$el.dismiss();
 
-    formEl.reset()
-    resetForm()
-    await toastController.create({
-      message: 'Estação salva com sucesso!',
-      duration: 2000,
-      position: 'bottom',
-      color: 'success',
-    }).then((toast) => {
-      toast.present()
-    })
+    formEl.reset();
+    resetForm();
+    await toastController
+      .create({
+        message: 'Estação salva com sucesso!',
+        duration: 2000,
+        position: 'bottom',
+        color: 'success',
+      })
+      .then((toast) => {
+        toast.present();
+      });
 
-    stationMethod.value = 'create'
-    
-  } catch(err) {
+    stationMethod.value = 'create';
+  } catch (err) {
     alert('ocorreu um erro ao salvar a estação');
-    console.error(err)
+    console.error(err);
   } finally {
     stations.isLoading = false;
   }
-}
+};
 
 const newClient = async () => {
   try {
     stations.isLoading = true;
-    
+
     const clientStationCreated: ClientStation = {
       title: form.title,
       stationId: form.stationId,
       user: form?.user || 'Cliente',
       time: form.time,
       datetime: new Date().toISOString(),
-      finished: false
+      finished: false,
     };
 
-    if(Number(form.time) <= 0) {
-      await toastController.create({
-        message: 'Por favor, insira um tempo de uso válido',
-        duration: 2000,
-        position: 'bottom',
-        color: 'danger',
-      }).then((toast) => {
-        toast.present()
-      })
-      return
+    if (Number(form.time) <= 0) {
+      await toastController
+        .create({
+          message: 'Por favor, insira um tempo de uso válido',
+          duration: 2000,
+          position: 'bottom',
+          color: 'danger',
+        })
+        .then((toast) => {
+          toast.present();
+        });
+      return;
     }
-    
+
     const allStations = await dataService.assignClientToStation(clientStationCreated);
 
     stations.items = allStations;
-    resetForm()
+    resetForm();
+    addClientModal.value?.$el.dismiss();
     await new Promise((resolve) => setTimeout(resolve, 1000));
   } catch (err) {
     console.error(err);
   } finally {
-    addStationModal.value?.$el.dismiss();
     stations.isLoading = false;
   }
 };
@@ -192,9 +245,9 @@ const openExcludeStation = async (id: number) => {
           handler: async () => {
             stations.isLoading = true;
             const newStations = await dataService.removeStation(id);
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            await new Promise((resolve) => setTimeout(resolve, 1000));
             stations.items = newStations;
-            stations.isLoading = false
+            stations.isLoading = false;
           },
         },
       ],
@@ -204,17 +257,45 @@ const openExcludeStation = async (id: number) => {
 
 const finishSession = async (station: Station) => {
   const allStations = await dataService.setFinishedClientStation(station.id);
-  
+
   stations.items = allStations;
 };
 
-const openClientModal = async(stationId: number) => {
-  if(stationId == undefined || stationId == null) return;
+const openClientModal = async (stationId: number) => {
+  if (stationId == undefined || stationId == null) return;
 
-  form.stationId = stationId
-  await addClientModal.value?.$el.present()
-}
+  form.stationId = stationId;
+  await addClientModal.value?.$el.present();
+};
 
+const makeStationFree = async (stationId: number) => {
+  if (stationId === undefined || stationId === null) return;
+
+  await alertController
+    .create({
+      header: 'Liberar estação',
+      message: 'Tem certeza de que deseja liberar esta estação?',
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+          cssClass: 'clear-button',
+        },
+        {
+          text: 'Liberar',
+          cssClass: 'clear-button',
+          handler: async () => {
+            stations.isLoading = true;
+            const newStations = await dataService.removeClientFromStation(stationId);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            stations.items = newStations;
+            stations.isLoading = false;
+          },
+        },
+      ],
+    })
+    .then((alert) => alert.present());
+};
 
 onMounted(() => {
   loadStations();
@@ -255,11 +336,22 @@ defineExpose({
     </div>
 
     <div v-else>
+      <FilterStations
+        v-model:searchStation="searchStation"
+        v-model:searchClient="searchClient"
+        v-model:filterStatus="filterStatus"
+        @clear-filters="clearFilters"
+      />
+
       <div id="tabs">
         <IonSegment>
           <IonSegmentButton value="all" content-id="all">
             <IonLabel>Todos</IonLabel>
           </IonSegmentButton>
+
+          <!-- <IonSegmentButton value="free" content-id="free">
+            <IonLabel>Livre</IonLabel>
+          </IonSegmentButton> -->
 
           <IonSegmentButton value="in_use" content-id="in_use">
             <IonLabel>Em andamento</IonLabel>
@@ -270,17 +362,28 @@ defineExpose({
           </IonSegmentButton>
         </IonSegment>
       </div>
-      
-      <IonSegmentView style="margin: 1rem 0;">
+
+      <IonSegmentView style="margin: 1rem 0">
         <IonSegmentContent id="all">
           <StationList
-            :stations="stations.items"
+            :stations="filteredStations"
             @exclude-station="openExcludeStation"
             @finish-session="finishSession"
             @assign-client="openClientModal"
             @edit-station="editStation"
+            @make-station-free="makeStationFree"
           />
         </IonSegmentContent>
+        <!-- <IonSegmentContent id="free">
+          <StationList
+            :stations="freeStations"
+            @exclude-station="openExcludeStation"
+            @finish-session="finishSession"
+            @assign-client="openClientModal"
+            @edit-station="editStation"
+            @make-station-free="makeStationFree"
+          />
+        </IonSegmentContent> -->
 
         <IonSegmentContent id="in_use">
           <StationList
@@ -288,6 +391,7 @@ defineExpose({
             @exclude-station="openExcludeStation"
             @finish-session="finishSession"
             @edit-station="editStation"
+            @make-station-free="makeStationFree"
           />
         </IonSegmentContent>
 
@@ -297,23 +401,16 @@ defineExpose({
             @exclude-station="openExcludeStation"
             @finish-session="finishSession"
             @edit-station="editStation"
+            @make-station-free="makeStationFree"
           />
         </IonSegmentContent>
       </IonSegmentView>
     </div>
-
   </div>
   <IonModal ref="addClientModal" class="max" :backdrop-dismiss="false">
     <header>
       <span class="title">Novo cliente</span>
-      <IonButton
-        fill="clear"
-        style="color: #fff"
-        size="small"
-        slot="start"
-        @click="addClientModal.$el.dismiss();
-        "
-      >
+      <IonButton fill="clear" style="color: #fff" size="small" slot="start" @click="addClientModal.$el.dismiss()">
         <IonIcon :icon="close" style="color: #fff"></IonIcon>
       </IonButton>
     </header>
@@ -368,20 +465,12 @@ defineExpose({
         <template v-if="stationMethod === 'create'">Nova estação</template>
         <template v-else>Editar estação</template>
       </span>
-      <IonButton
-        fill="clear"
-        style="color: #fff"
-        size="small"
-        slot="start"
-        @click="
-          addStationModal.$el.dismiss();
-        "
-      >
+      <IonButton fill="clear" style="color: #fff" size="small" slot="start" @click="addStationModal.$el.dismiss()">
         <IonIcon :icon="close" style="color: #fff"></IonIcon>
       </IonButton>
     </header>
     <div class="container">
-      <form method="post" @submit.prevent="newStation" style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+      <form method="post" @submit.prevent="newStation" style="display: flex; flex-direction: column; gap: 10px; width: 100%">
         <div>
           <label for="title">Título da estação</label>
           <input type="text" name="title" id="title" v-model="form.title" required />
@@ -396,7 +485,7 @@ defineExpose({
           </select>
         </div>
 
-        <button type="submit" class="light" :disabled="stations.isLoading" style="align-self: flex-end;">
+        <button type="submit" class="light" :disabled="stations.isLoading" style="align-self: flex-end">
           <template v-if="stations.isLoading">
             <IonSpinner name="dots" color="#fff"></IonSpinner>
           </template>
@@ -471,12 +560,7 @@ defineExpose({
 }
 
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    #242424 25%,
-    #303030 50%,
-    #242424 75%
-  );
+  background: linear-gradient(90deg, #242424 25%, #303030 50%, #242424 75%);
   background-size: 200% 100%;
   border-radius: 6px;
   animation: skeleton-loading 1.5s infinite;
@@ -561,7 +645,6 @@ ion-modal header {
   padding: 16px 20px;
 }
 
-
 ion-modal form {
   width: 100%;
 }
@@ -609,5 +692,4 @@ ion-modal input:disabled {
     animation: none;
   }
 }
-
 </style>

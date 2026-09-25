@@ -1,6 +1,6 @@
 import { fileToDataURL } from '@/utis/file';
 import { formatBRL, formatClock, isToday, toNumber } from '@/utis/helpers';
-import { ClientStation, db, Station } from './database.service';
+import { ClientStation, db, Station, StationStatus } from './database.service';
 
 export default class DataService {
   data: {
@@ -85,6 +85,7 @@ export default class DataService {
 
   async assignClientToStation(data: ClientStation) {
     const station = await db.stations.where("id").equals(data.stationId).first()
+    station.status = StationStatus.InUse
     if(station) {
       await db.stations.update(station.id, { ...station, client: data })
     }
@@ -93,6 +94,17 @@ export default class DataService {
 
   async removeStation(id: number) {
     await db.stations.delete(id);
+    return await db.stations.toArray();
+  }
+
+  async removeClientFromStation(id: number) {
+    const station = await db.stations.where("id").equals(id).first()
+    
+    if(station) {
+      station.client = null
+      station.status = StationStatus.Free
+      await db.stations.update(id, station)
+    }
     return await db.stations.toArray();
   }
 
