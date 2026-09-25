@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { IonButton } from '@ionic/vue';
+import { IonButton, IonIcon } from '@ionic/vue';
+import { closeOutline } from 'ionicons/icons';
 //@ts-ignore
 import { computed, defineProps, ref, watch } from 'vue';
 
@@ -103,16 +104,21 @@ const hasActiveFilters = computed(() => {
         />
       </div>
 
-      <div class="field">
+      <div class="field last-child">
         <label class="field__label" for="filter-status">Status</label>
 
-        <select v-model="debouncedFilterStatus" name="filter-status" id="filter-status">
-          <option value="all">Todos</option>
-          <option value="free">Livre</option>
-          <option value="in_use">Ocupado</option>
-        </select>
-
-        <IonButton v-if="hasActiveFilters" fill="clear" type="button" class="filters__clear" @click="clearFilters"> Limpar filtros </IonButton>
+        <div style="display: flex; gap: 1rem;">
+          <select v-model="debouncedFilterStatus" name="filter-status" id="filter-status">
+            <option value="all">Todos</option>
+            <option value="free">Livre</option>
+            <option value="in_use">Ocupado</option>
+            <option value="maintenance">Em manutenção</option>
+          </select>
+  
+          <IonButton v-if="hasActiveFilters" color="secondary" title="Limpar filtros" fill="solid" size="small" type="button" @click="clearFilters">
+            <IonIcon :icon="closeOutline"></IonIcon>
+          </IonButton>
+        </div>
       </div>
     </div>
   </div>
@@ -129,6 +135,7 @@ const hasActiveFilters = computed(() => {
 
   & .field {
     width: 50%;
+
   }
 
 }

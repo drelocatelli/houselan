@@ -16,9 +16,9 @@ import {
 } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { computed, inject, onMounted, reactive, readonly, ref } from 'vue';
+import FilterStations from './FilterStations.vue';
 import StationList from './StationList.vue';
 import TimeInput from './TimeInput.vue';
-import FilterStations from './FilterStations.vue';
 
 const appConfig = inject('config');
 
@@ -35,6 +35,8 @@ const stations = reactive({
 const searchStation = ref('');
 const searchClient = ref('');
 const filterStatus = ref('all');
+
+const selectedTab = ref<'all' | 'in_use' | 'finished'>('all');
 
 const clearFilters = () => {
   searchStation.value = '';
@@ -336,15 +338,8 @@ defineExpose({
     </div>
 
     <div v-else>
-      <FilterStations
-        v-model:searchStation="searchStation"
-        v-model:searchClient="searchClient"
-        v-model:filterStatus="filterStatus"
-        @clear-filters="clearFilters"
-      />
-
       <div id="tabs">
-        <IonSegment>
+        <IonSegment v-model="selectedTab">
           <IonSegmentButton value="all" content-id="all">
             <IonLabel>Todos</IonLabel>
           </IonSegmentButton>
@@ -365,6 +360,13 @@ defineExpose({
 
       <IonSegmentView style="margin: 1rem 0">
         <IonSegmentContent id="all">
+          <FilterStations
+            v-if="selectedTab === 'all'"
+            v-model:searchStation="searchStation"
+            v-model:searchClient="searchClient"
+            v-model:filterStatus="filterStatus"
+            @clear-filters="clearFilters"
+          />
           <StationList
             :stations="filteredStations"
             @exclude-station="openExcludeStation"
