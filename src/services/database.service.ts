@@ -116,17 +116,13 @@ export class AppDatabase extends Dexie {
     const response = await fetch('/logo.png');
     const blob = await response.blob();
 
-    // store logo
-    if (logo) {
-      await this.logo.update(logo.id, {
-        file: blob,
-      });
-    } else {
-      await this.logo.add({
-        id: 0,
-        file: blob,
-      });
-    }
+    await this.logo.clear();
+    await this.logo.put({
+      id: 1,
+      file: blob,
+    });
+
+    return URL.createObjectURL(blob);
   }
 
   async getTheme(): Promise<string> {

@@ -37,17 +37,17 @@ export default class DataService {
     };
   }
 
+  private currentLogoUrl: string | null = null;
+
   async getLogo() {
-    let logoObjectUrl = null;
     const logo = await db.logo.toCollection().first();
 
-    if (logoObjectUrl) {
-      URL.revokeObjectURL(logoObjectUrl);
-    }
-
     if (logo?.file instanceof Blob) {
-      logoObjectUrl = URL.createObjectURL(logo.file);
-      this.data.logoUrl = logoObjectUrl;
+      if (this.currentLogoUrl) {
+        URL.revokeObjectURL(this.currentLogoUrl);
+      }
+      this.currentLogoUrl = URL.createObjectURL(logo.file);
+      this.data.logoUrl = this.currentLogoUrl;
 
       // set app icon
       try {

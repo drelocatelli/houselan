@@ -145,8 +145,8 @@ export class ElectronCapacitorApp {
       show: false,
       x: this.mainWindowState.x,
       y: this.mainWindowState.y,
-      width: this.mainWindowState.width,
-      height: this.mainWindowState.height,
+      // width: this.mainWindowState.width,
+      // height: this.mainWindowState.height,
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: true,
@@ -156,6 +156,7 @@ export class ElectronCapacitorApp {
       },
     });
     mainWindowGlobal = this.MainWindow;
+    this.MainWindow.maximize();
 
     this.MainWindow.webContents.on('context-menu', (_event, params) => {
       const menu = Menu.buildFromTemplate([

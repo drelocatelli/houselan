@@ -2,28 +2,37 @@
 import { db } from '@/services/database.service';
 import { fileToDataURL } from '@/utis/file';
 import { modalController } from '@ionic/vue';
-import { inject, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
-
-const router = useRouter()
+import { inject, reactive, ref, watch } from 'vue';
 
 const appConfig = inject<any>('config');
 
-const logoInput = ref<HTMLInputElement | null>(null)
+const logoInput = ref<HTMLInputElement | null>(null);
 const selectedLogo = ref<File | null>(null);
 const logoPreview = ref('');
 
 const form = reactive({
-  appName: appConfig.appName,
-  logoUrl: appConfig.logoUrl,
-  pricePerHour: appConfig.pricePerHour
+  appName: appConfig?.appName || '',
+  logoUrl: appConfig?.logoUrl || '',
+  pricePerHour: appConfig?.pricePerHour || 0
 });
 
-const emit = defineEmits(['onSaved'])
+watch(
+  () => appConfig,
+  (newConfig) => {
+    if (newConfig) {
+      form.appName = newConfig.appName;
+      form.logoUrl = newConfig.logoUrl;
+      form.pricePerHour = newConfig.pricePerHour;
+    }
+  },
+  { deep: true }
+);
+
+const emit = defineEmits(['onSaved']);
 
 const openLogoPicker = () => {
-  logoInput.value.click();
-}
+  logoInput.value?.click();
+};
 
 const onLogoSelected = (event: Event) => {
   const input = event.target as HTMLInputElement;
@@ -42,26 +51,25 @@ const onLogoSelected = (event: Event) => {
     return;
   }
 
-  if (form.logoUrl) {
-    URL.revokeObjectURL(form.logoUrl);
+  if (logoPreview.value) {
+    URL.revokeObjectURL(logoPreview.value);
   }
 
   selectedLogo.value = file;
-  form.logoUrl = URL.createObjectURL(file);
-}
+  logoPreview.value = URL.createObjectURL(file);
+  form.logoUrl = logoPreview.value;
+};
 
 const saveSettings = async () => {
   try {
     const config = await db.config.toCollection().first();
 
     if (config) {
-      const result = await db.config.update(config.key, {
-        key: 0,
+      await db.config.update(config.key, {
+        key: config.key ?? 0,
         appName: form.appName,
         pricePerHour: form.pricePerHour
       });
-
-      console.log({ result });
     } else {
       await db.config.add({
         key: 0,
@@ -72,10 +80,10 @@ const saveSettings = async () => {
 
     await saveLogo();
 
-    emit('onSaved')
+    emit('onSaved');
 
     await modalController.dismiss();
-    router.go(0);
+    window.location.reload();
   } catch (err) {
     console.error(err);
   }
@@ -86,18 +94,11 @@ const saveLogo = async () => {
 
   const logoFile = selectedLogo.value;
 
-  const currentLogo = await db.logo.toCollection().first();
-
-  if (currentLogo) {
-    await db.logo.update(currentLogo.id, {
-      file: logoFile,
-    });
-  } else {
-    await db.logo.add({
-      id: 0,
-      file: logoFile,
-    });
-  }
+  await db.logo.clear();
+  await db.logo.put({
+    id: 1,
+    file: logoFile,
+  });
 
   try {
     const dataUrl = await fileToDataURL(logoFile);
